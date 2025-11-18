@@ -30,7 +30,6 @@ namespace ConsoleApp1
                         break;
                     case "/exit":
                         ExitCommand();
-                        ExitCommand();
                         break;
                     default:
                         Console.WriteLine("Комманда не распознана!");
