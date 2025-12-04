@@ -6,13 +6,14 @@ namespace ConsoleApp1
     internal class Program
     {
         static string? UserName = "Гость";
+        static List<string> Tasks = new List<string>();
         static void Main(string[] args)
         {
             Console.WriteLine($"Добрый день {UserName}!");
             HelpCommand();
             while (true)
             {
-                Console.Write("Ответ:");
+                Console.Write("Запрос:");
                 string? input = Console.ReadLine();
                 switch (input)
                 {
@@ -30,6 +31,15 @@ namespace ConsoleApp1
                         break;
                     case "/exit":
                         ExitCommand();
+                        break;
+                    case "/addtask":
+                        AddtaskCommand();
+                        break;
+                    case "/showtask":
+                        ShowTaskCommand();
+                        break;
+                    case "/removetask":
+                        RemoveTaskCommand();
                         break;
                     default:
                         Console.WriteLine("Комманда не распознана!");
@@ -49,6 +59,73 @@ namespace ConsoleApp1
             UserName = Console.ReadLine();
             Console.WriteLine($"Добрый день {UserName}!");
         }
+        static void AddtaskCommand()
+        {
+            while (true)
+            {
+                Console.Write("Пожалуйста, введите описание задачи:");
+                string TaskName = Console.ReadLine();
+                if (TaskName == string.Empty)
+                {
+                    Console.WriteLine("Вы ничего не ввели");
+                    continue;
+                }else
+                {
+                    Tasks.Add(TaskName);
+                    Console.WriteLine("Задача успешно добавлена!");
+                    return;
+                }
+            }
+        }
+        static void ShowTaskCommand()
+        {
+            if (Tasks.Count == 0)
+            { 
+                Console.WriteLine("Список задач пуст!");
+                return;
+            }
+            Console.WriteLine("Список задач:");
+            int i = 0;
+            while (i<Tasks.Count)
+            {
+                Console.WriteLine($"{i+1}){Tasks[i]}");
+                i++;
+            }
+        }
+        static void RemoveTaskCommand()
+        {
+            if (Tasks.Count == 0)
+            {
+                Console.WriteLine("Список задач пуст!");
+                return;
+            }
+            Console.WriteLine("Какую из задач хотите удалить?");
+            ShowTaskCommand();
+            Console.Write("Ответ:");
+            int i =0;
+            do
+            {
+                if (int.TryParse(Console.ReadLine(), out i))
+                {
+                    try 
+                    { 
+                        Tasks.RemoveAt(i-1);
+                        Console.WriteLine("Задача успешно удалена.");
+                        return;
+                    }catch(ArgumentOutOfRangeException ex)
+                    {
+                        Console.WriteLine("Укажите номер задачи из списка!");
+                        Console.Write("Ответ:");
+                        continue;
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("Допустимы только цифры\\числа!!!");
+                    Console.Write("Ответ:");
+                }
+            } while (true);
+        }
         static void HelpCommand()
         {
             Console.WriteLine($"{UserName}, используйте следующий список команд для работы:\r\n" +
@@ -56,6 +133,9 @@ namespace ConsoleApp1
                 "/help - вывод помощи\r\n" +
                 "/info - вывод информации по программе\r\n" +
                 "/echo - вывод сообщения\r\n" +
+                "/addtask - добавить задачу\r\n"+
+                "/showtask - показать список задач\r\n"+
+                "/removetask - удалить задачу из списка\r\n"+
                 "/exit - выход из программы");
         }
         static void InfoCommand()
