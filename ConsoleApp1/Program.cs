@@ -6,12 +6,13 @@ namespace ConsoleApp1
     internal class Program
     {
         static string? UserName = "Гость";
+        static bool Exit = false;
         static List<string> Tasks = new List<string>();
         static void Main(string[] args)
         {
             Console.WriteLine($"Добрый день {UserName}!");
             HelpCommand();
-            while (true)
+            while (!Exit)
             {
                 Console.Write("Запрос:");
                 string? input = Console.ReadLine();
@@ -29,9 +30,6 @@ namespace ConsoleApp1
                     case string a when a.IndexOf("/echo") == 0:
                         EchoCommand(input.Remove(0,5).Trim());
                         break;
-                    case "/exit":
-                        ExitCommand();
-                        break;
                     case "/addtask":
                         AddtaskCommand();
                         break;
@@ -40,6 +38,9 @@ namespace ConsoleApp1
                         break;
                     case "/removetask":
                         RemoveTaskCommand();
+                        break;
+                    case "/exit":
+                        ExitCommand();
                         break;
                     default:
                         Console.WriteLine("Комманда не распознана!");
@@ -77,12 +78,12 @@ namespace ConsoleApp1
                 }
             }
         }
-        static void ShowTaskCommand()
+        static bool ShowTaskCommand()
         {
             if (Tasks.Count == 0)
             { 
                 Console.WriteLine("Список задач пуст!");
-                return;
+                return false;
             }
             Console.WriteLine("Список задач:");
             int i = 0;
@@ -91,16 +92,15 @@ namespace ConsoleApp1
                 Console.WriteLine($"{i+1}){Tasks[i]}");
                 i++;
             }
+            return true;
         }
         static void RemoveTaskCommand()
         {
-            if (Tasks.Count == 0)
+            if (!ShowTaskCommand())
             {
-                Console.WriteLine("Список задач пуст!");
                 return;
             }
             Console.WriteLine("Какую из задач хотите удалить?");
-            ShowTaskCommand();
             Console.Write("Ответ:");
             int i =0;
             do
@@ -156,7 +156,7 @@ namespace ConsoleApp1
         static void ExitCommand()
         {
             Console.WriteLine($"До свидания, {UserName}!");
-            Environment.Exit(0);
+            Exit = true;
         }
     }
 }
