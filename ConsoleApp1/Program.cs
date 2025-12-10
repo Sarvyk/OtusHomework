@@ -115,7 +115,7 @@ namespace ConsoleApp1
         }
         static void ValidateString(string? str)
         {
-            if (str == null || str == string.Empty || str.Trim() == "")
+            if (string.IsNullOrWhiteSpace(str))
                 throw new ArgumentException("Строка не должна быть Null или пустой");
         }
         static void StartCommand()
