@@ -29,7 +29,7 @@ namespace ConsoleApp1.Classes
             User = user;
             Name = name;
             CreatedAt = DateTime.UtcNow;
-            State = ToDoItemState.Actrive;
+            State = ToDoItemState.Active;
         }
     }
 }
