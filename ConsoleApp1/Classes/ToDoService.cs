@@ -4,14 +4,20 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace ConsoleApp1.Classes
 {
     internal class ToDoService : IToDoService
     {
-        private List<ToDoItem> Tasks = new List<ToDoItem>();
-        int? MaxTasks;
-        int? MaxTaskLength;
+        private readonly List<ToDoItem> _tasks = new List<ToDoItem>();
+        private int MaxTasks;
+        private int MaxTaskLength;
+        public ToDoService()
+        {
+            SetMaxTask();
+            SetMaxTaskLength();
+        }
         public ToDoItem Add(ToDoUser user, string name)
         {
             ValidateString(name);
@@ -20,7 +26,7 @@ namespace ConsoleApp1.Classes
             {
                 throw new TaskLenghtLimitException(Task.Name.Length, (int)MaxTaskLength);
             }
-            else if(Tasks.Count == MaxTasks)
+            else if(_tasks.Count == MaxTasks)
             {
                 throw new TaskCountLimitException((int)MaxTasks);
             }
@@ -28,31 +34,31 @@ namespace ConsoleApp1.Classes
             {
                 throw new DublicateTaskException(name);
             }
-            Tasks.Add(Task);
+            _tasks.Add(Task);
             return Task;
         }
 
         public void Delete(Guid id)
         {
-            if (Tasks.RemoveAll(n => n.id == id) == 0)
+            if (_tasks.RemoveAll(n => n.id == id) == 0)
                 throw new ArgumentException("Такой задачи нет, либо список пуст");
         }
 
-        public IReadOnlyList<ToDoItem> GetActiveByUserId(Guid userId)
+        public IReadOnlyList<ToDoItem> GetActiveByUserId(Guid userid)
         {
-            IReadOnlyList<ToDoItem> ActiveItems = Tasks.FindAll(n=>n.State == ToDoItemState.Active);
+            IReadOnlyList<ToDoItem> ActiveItems = _tasks.FindAll(n=>n.State == ToDoItemState.Active && n.User.UserId == userid);
             return ActiveItems;
         }
 
         public IReadOnlyList<ToDoItem> GetAllByUserId(Guid userid)
         {
-            IReadOnlyList<ToDoItem> AllItems = Tasks;
+            IReadOnlyList<ToDoItem> AllItems = _tasks.FindAll(n=>n.User.UserId == userid);
             return AllItems;
         }
 
         public void MarkCompleted(Guid id)
         {
-            foreach(ToDoItem Task in Tasks)
+            foreach(ToDoItem Task in _tasks)
             {
                 if(Task.id == id)
                 {
@@ -61,14 +67,9 @@ namespace ConsoleApp1.Classes
                 }
             }
         }
-        public Guid GetTaskByNumber(string str)
+        public void SetMaxTaskLength()
         {
-            int num = ParseAndValidateInt(str, 0, Tasks.Count) -1;
-            return Tasks[num].id;
-        }
-        public void SetMaxTaskLength(ITelegramBotClient bot, Update update)
-        {
-            bot.SendMessage(update.Message.Chat,"Введите максимально допустимую длину задачи(1-100):");
+            Console.WriteLine("Введите максимально допустимую длину задачи(1-100):");
             int number = 0;
             while (MaxTaskLength == null)
             {
@@ -78,17 +79,17 @@ namespace ConsoleApp1.Classes
                 }
                 catch (ArgumentException ArEx) 
                 {
-                    bot.SendMessage(update.Message.Chat, ArEx.Message);
+                    Console.WriteLine(ArEx.Message);
                     continue;
                 }
                 MaxTaskLength = number;
-                bot.SendMessage(update.Message.Chat, $"Максимальная длина задачи установлена:{MaxTaskLength}");
+                Console.WriteLine($"Максимальная длина задачи установлена:{MaxTaskLength}");
             }
         }
 
-        public void SetMaxTask(ITelegramBotClient bot, Update update)
+        public void SetMaxTask()
         {
-            bot.SendMessage(update.Message.Chat, "Введите максимальное количество задач(1-100):");
+            Console.WriteLine("Введите максимальное количество задач(1-100):");
             int number = 0;
             while (MaxTasks == null)
             {
@@ -98,16 +99,16 @@ namespace ConsoleApp1.Classes
                 }
                 catch (ArgumentException ArEx) 
                 {
-                    bot.SendMessage(update.Message.Chat, ArEx.Message);
+                    Console.WriteLine(ArEx.Message);
                     continue; 
                 }
                 MaxTasks = number;
-                bot.SendMessage(update.Message.Chat, $"Максимальное количество задач установлено:{MaxTasks}");
+                Console.WriteLine($"Максимальное количество задач установлено:{MaxTasks}");
             }
         }
         private bool IsDublicate(ToDoItem task)
         {
-            foreach (ToDoItem Task in Tasks)
+            foreach (ToDoItem Task in _tasks)
             {
                 if (Task.Name == task.Name)
                     return true;

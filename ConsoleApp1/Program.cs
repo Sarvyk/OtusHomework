@@ -10,7 +10,9 @@ namespace ConsoleApp1
         {
             try
             {
-                UpdateHandler handler = new UpdateHandler(new UserService(), new ToDoService());
+                var botClient = new ConsoleBotClient();
+                var handler = new UpdateHandler(new UserService(), new ToDoService());
+                botClient.StartReceiving(handler);
             }
             catch (Exception ex)
             { 
