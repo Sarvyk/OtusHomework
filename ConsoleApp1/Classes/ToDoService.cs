@@ -11,8 +11,8 @@ namespace ConsoleApp1.Classes
     internal class ToDoService : IToDoService
     {
         private readonly List<ToDoItem> _tasks = new List<ToDoItem>();
-        private int MaxTasks;
-        private int MaxTaskLength;
+        private int? MaxTasks;
+        private int? MaxTaskLength;
         public ToDoService()
         {
             SetMaxTask();
