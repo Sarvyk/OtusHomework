@@ -7,7 +7,7 @@ namespace ConsoleApp1.Classes
 {
     enum ToDoItemState
     {
-        Actrive,
+        Active,
         Completed
     }
 }

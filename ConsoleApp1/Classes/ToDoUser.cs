@@ -6,14 +6,16 @@ namespace ConsoleApp1.Classes
 {
     internal class ToDoUser
     {
-        Guid UserId;
+        public Guid UserId;
+        public long TelegramUserId;
         public string TelegramUserName;
-        DateTime RegisteredAt;
-        public ToDoUser(string telegramUserName)
+        public DateTime RegisteredAt;
+        public ToDoUser(string telegramUserName, long telegramUserId)
         {
             UserId = Guid.NewGuid();
             TelegramUserName = telegramUserName;
             RegisteredAt = DateTime.UtcNow;
+            TelegramUserId = telegramUserId;
         }
     }
 }
