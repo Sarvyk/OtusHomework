@@ -1,4 +1,8 @@
-﻿using Otus.ToDoList.ConsoleBot;
+﻿using ConsoleApp1.DataAccess;
+using ConsoleApp1.Entities;
+using ConsoleApp1.Exceptions;
+using ConsoleApp1.Services;
+using Otus.ToDoList.ConsoleBot;
 using Otus.ToDoList.ConsoleBot.Types;
 using System.Reflection;
 
@@ -7,21 +11,21 @@ namespace ConsoleApp1.Classes
 {
     internal class UpdateHandler : IUpdateHandler
     {
-        private readonly IUserService UserService;
-        private readonly IToDoService ToDoService;
+        private readonly IUserService _userService;
+        private readonly IToDoService _toDoService;
         public UpdateHandler(IUserService userService, IToDoService toDoService)
         {
-            UserService = userService;
-            ToDoService = toDoService;
+            _userService = userService;
+            _toDoService = toDoService;
         }
         public void HandleUpdateAsync(ITelegramBotClient botClient, Update update)
         {
             try
             {
-                switch(update.Message.Text)
+                switch (update.Message.Text)
                 {
                     case "/start":
-                        botClient.SendMessage(update.Message.Chat, StartCommand(botClient,update));
+                        botClient.SendMessage(update.Message.Chat, StartCommand(botClient, update));
                         botClient.SendMessage(update.Message.Chat, $"{HelpCommand(update)}");
                         break;
                     case "/help":
@@ -31,46 +35,61 @@ namespace ConsoleApp1.Classes
                         botClient.SendMessage(update.Message.Chat, $"{InfoCommand()}");
                         break;
                     case string a when a.IndexOf("/addtask") == 0:
-                        if (IsRegistered(botClient,update))
+                        if (IsRegistered(botClient, update))
                         {
-                            ToDoService.Add(UserService.GetUser(update.Message.From.Id), a.Replace("/addtask", "").Trim());
+                            _toDoService.Add(_userService.GetUserByTelegramUserId(update.Message.From.Id), a.Replace("/addtask", "").Trim());
                             botClient.SendMessage(update.Message.Chat, "Задача успешно добавлена");
                         }
                         break;
                     case string a when a.IndexOf("/completetask") == 0:
-                        if (IsRegistered(botClient,update))
+                        if (IsRegistered(botClient, update))
                         {
                             Guid guid = new Guid();
                             if (!Guid.TryParse(a.Replace("/completetask", ""), out guid))
                                 throw new ArgumentException("Такого id нет!");
-                            ToDoService.MarkCompleted(guid);
+                            _toDoService.MarkCompleted(guid);
                             botClient.SendMessage(update.Message.Chat, "Задача завершена");
                         }
                         break;
                     case string a when a.IndexOf("/removetask") == 0:
-                        if (IsRegistered(botClient,update))
+                        if (IsRegistered(botClient, update))
                         {
                             Guid guid = new Guid();
                             if (!Guid.TryParse(a.Replace("/removetask", ""), out guid))
                                 throw new ArgumentException("Такого id нет!");
-                            ToDoService.Delete(guid);
+                            _toDoService.Delete(guid);
                             botClient.SendMessage(update.Message.Chat, "Задача успешно удалена");
                         }
                         break;
                     case "/showtask":
-                        if(IsRegistered(botClient,update))
+                        if (IsRegistered(botClient, update))
                         {
                             ShowTasks(botClient, update);
                         }
                         break;
                     case "/showalltask":
-                        if (IsRegistered(botClient,update))
+                        if (IsRegistered(botClient, update))
                         {
                             ShowTasks(botClient, update, true);
                         }
-                            break;
+                        break;
+                    case "/report":
+                        if (IsRegistered(botClient, update))
+                        {
+                            IToDoReportService report = new ToDoReportService(_toDoService);
+                            var stat = report.GetUserStats(_userService.GetUserByTelegramUserId(update.Message.From.Id).UserId);
+                            botClient.SendMessage(update.Message.Chat, $"Статистика по задачами на {stat.generatedAt}. Всего: {stat.total}; Завершённых: {stat.completed}; Активных: {stat.active}.");
+                        }
+                        break;
+                    case string a when a.IndexOf("/find") == 0:
+                        if (IsRegistered(botClient, update))
+                        {
+                            FindTasks(botClient, update, a.Replace("/find", "").Trim());
+                            //var list = _toDoService.Find(_userService.GetUserByTelegramUserId(update.Message.From.Id).UserId, a.Replace("/addtask", "").Trim());
+                        }
+                        break;
                     default:
-                        botClient.SendMessage(update.Message.Chat,"Такой команды не существует!");
+                        botClient.SendMessage(update.Message.Chat, "Такой команды не существует!");
                         break;
                 }
             }
@@ -93,50 +112,65 @@ namespace ConsoleApp1.Classes
         }
         private void ShowTasks(ITelegramBotClient bot, Update update, bool isActive = false)
         {
-            Guid guid = UserService.GetUser(update.Message.From.Id).UserId;
+            Guid guid = _userService.GetUserByTelegramUserId(update.Message.From.Id).UserId;
             if (!isActive)
             {//Вывести все задачи.
-                if (ToDoService.GetActiveByUserId(guid).Count == 0)
+                if (_toDoService.GetActiveByUserId(guid).Count == 0)
                 {
                     bot.SendMessage(update.Message.Chat, "Задач в списке нет.");
                     return;
                 }
                 int i = 1;
-                foreach (ToDoItem Task in ToDoService.GetActiveByUserId(guid))
+                foreach (ToDoItem Task in _toDoService.GetActiveByUserId(guid))
                 {
                     bot.SendMessage(update.Message.Chat, $"{i++})ID:{Task.id}, Название:{Task.Name}, Дата создания:{Task.CreatedAt}");
                 }
             }
             else
             {//Вывести только те, что активны.
-                if (ToDoService.GetAllByUserId(guid).Count == 0)
+                if (_toDoService.GetAllByUserId(guid).Count == 0)
                 {
                     bot.SendMessage(update.Message.Chat, "Задач в списке нет.");
                     return;
                 }
                 int i = 1;
-                foreach (ToDoItem Task in ToDoService.GetAllByUserId(guid))
+                foreach (ToDoItem Task in _toDoService.GetAllByUserId(guid))
                 {
                     bot.SendMessage(update.Message.Chat, $"{i++})ID:{Task.id}, Название:{Task.Name}, Дата создания:{Task.CreatedAt}, Статус:{Task.State}, Изменение статуса:{Task.StateChangedAt}");
                 }
             }
         }
+        private void FindTasks(ITelegramBotClient bot, Update update, string namePrefix)
+        {
+            Guid guid = _userService.GetUserByTelegramUserId(update.Message.From.Id).UserId;
+            var tasks = _toDoService.Find(guid, namePrefix);
+            if (tasks.Count == 0)
+            {
+                bot.SendMessage(update.Message.Chat, "Задач в списке нет.");
+                return;
+            }
+            int i = 1;
+            foreach (ToDoItem Task in tasks)
+            {
+                bot.SendMessage(update.Message.Chat, $"{i++})ID:{Task.id}, Название:{Task.Name}, Дата создания:{Task.CreatedAt}");
+            }
+        }
         private string StartCommand(ITelegramBotClient bot, Update update)
         {
-            ToDoUser? User = UserService.GetUser(update.Message.From.Id);
+            ToDoUser? User = _userService.GetUserByTelegramUserId(update.Message.From.Id);
             if (User != null)
             {
                 return $"{User.TelegramUserName}, команда уже выполнена.";
             }
             else
             {
-                User = UserService.RegisterUser(update.Message.From.Id, update.Message.From.Username);
+                User = _userService.RegisterUser(update.Message.From.Id, update.Message.From.Username);
                 return $"{User.TelegramUserName}, добро пожаловать!";
             }
         }
         private bool IsRegistered(ITelegramBotClient bot,Update update)
         {
-            if (UserService.GetUser(update.Message.From.Id) == null)
+            if (_userService.GetUserByTelegramUserId(update.Message.From.Id) == null)
             {
                 bot.SendMessage(update.Message.Chat, "Команда доступна только для зарегистрированных пользователей. /start Для запуска.");
                 return false;
@@ -146,15 +180,17 @@ namespace ConsoleApp1.Classes
         }
         private string HelpCommand(Update update)
         {
-            if (UserService.GetUser(update.Message.From.Id) != null)
+            if (_userService.GetUserByTelegramUserId(update.Message.From.Id) != null)
                 return $"Используйте следующий список команд для работы:\r\n" +
                 "/help - вывод помощи\r\n" +
                 "/info - вывод информации по программе\r\n" +
-                "/addtask - добавить задачу\r\n" +
+                "/addtask [название] - добавить задачу\r\n" +
                 "/showtask - показать список задач\r\n" +
-                "/completetask - завершить задачу\r\n" +
                 "/showalltask - показать все задачи\r\n" +
-                "/removetask - удалить задачу из списка";
+                "/completetask [id] - завершить задачу\r\n" +
+                "/removetask [id] - удалить задачу из списка\r\n" +
+                "/report - статистика по задачам\r\n"+
+                "/find [значение] - выводит список задач, которые начинаются с определённого значения";
             else
                 return "Для не зарегестрированного пользователя доступны только команды /start, /help и /info";
         }

@@ -1,20 +1,17 @@
-﻿using Otus.ToDoList.ConsoleBot;
-using Otus.ToDoList.ConsoleBot.Types;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
-using static System.Net.Mime.MediaTypeNames;
+﻿using ConsoleApp1.DataAccess;
+using ConsoleApp1.Exceptions;
+using ConsoleApp1.Infrastructure.DataAccess;
 
-namespace ConsoleApp1.Classes
+namespace ConsoleApp1.Entities
 {
     internal class ToDoService : IToDoService
     {
-        private readonly List<ToDoItem> _tasks = new List<ToDoItem>();
-        private int? MaxTasks;
-        private int? MaxTaskLength;
-        public ToDoService()
+        private readonly IToDoRepository _repository;
+        private int? _maxTasks;
+        private int? _maxTaskLength;
+        public ToDoService(IToDoRepository repository)
         {
+            _repository = repository;
             SetMaxTask();
             SetMaxTaskLength();
         }
@@ -22,56 +19,54 @@ namespace ConsoleApp1.Classes
         {
             ValidateString(name);
             ToDoItem Task = new ToDoItem(user, name);
-            if(Task.Name.Length >MaxTaskLength)
+            if(Task.Name.Length > _maxTaskLength)
             {
-                throw new TaskLenghtLimitException(Task.Name.Length, (int)MaxTaskLength);
+                throw new TaskLenghtLimitException(Task.Name.Length, (int)_maxTaskLength);
             }
-            else if(_tasks.Count == MaxTasks)
+            else if(_repository.CountActive(user.UserId) == _maxTasks)
             {
-                throw new TaskCountLimitException((int)MaxTasks);
+                throw new TaskCountLimitException((int)_maxTasks);
             }
-            else if (IsDublicate(Task))
+            else if (IsDublicate(user,Task))
             {
                 throw new DublicateTaskException(name);
             }
-            _tasks.Add(Task);
+            _repository.Add(Task);
             return Task;
         }
 
         public void Delete(Guid id)
         {
-            if (_tasks.RemoveAll(n => n.id == id) == 0)
-                throw new ArgumentException("Такой задачи нет, либо список пуст");
+            _repository.Delete(id);
         }
 
         public IReadOnlyList<ToDoItem> GetActiveByUserId(Guid userid)
         {
-            IReadOnlyList<ToDoItem> ActiveItems = _tasks.FindAll(n=>n.State == ToDoItemState.Active && n.User.UserId == userid);
-            return ActiveItems;
+            return _repository.GetActiveByUserId(userid);
         }
 
         public IReadOnlyList<ToDoItem> GetAllByUserId(Guid userid)
         {
-            IReadOnlyList<ToDoItem> AllItems = _tasks.FindAll(n=>n.User.UserId == userid);
-            return AllItems;
+            return _repository.GetAllByUserId(userid);
+        }
+        public IReadOnlyList<ToDoItem> Find(Guid userId, string namePrefix)
+        {
+            return _repository.Find(userId, item => item.Name.StartsWith(namePrefix));
         }
 
         public void MarkCompleted(Guid id)
         {
-            foreach(ToDoItem Task in _tasks)
+            ToDoItem? item = _repository.Get(id);
+            if (item != null)
             {
-                if(Task.id == id)
-                {
-                    Task.State = ToDoItemState.Completed;
-                    break;
-                }
+                _repository.Update(item);
             }
         }
         public void SetMaxTaskLength()
         {
             Console.WriteLine("Введите максимально допустимую длину задачи(1-100):");
             int number = 0;
-            while (MaxTaskLength == null)
+            while (_maxTaskLength == null)
             {
                 try
                 {
@@ -82,8 +77,8 @@ namespace ConsoleApp1.Classes
                     Console.WriteLine(ArEx.Message);
                     continue;
                 }
-                MaxTaskLength = number;
-                Console.WriteLine($"Максимальная длина задачи установлена:{MaxTaskLength}");
+                _maxTaskLength = number;
+                Console.WriteLine($"Максимальная длина задачи установлена:{_maxTaskLength}");
             }
         }
 
@@ -91,7 +86,7 @@ namespace ConsoleApp1.Classes
         {
             Console.WriteLine("Введите максимальное количество задач(1-100):");
             int number = 0;
-            while (MaxTasks == null)
+            while (_maxTasks == null)
             {
                 try
                 {
@@ -102,18 +97,16 @@ namespace ConsoleApp1.Classes
                     Console.WriteLine(ArEx.Message);
                     continue; 
                 }
-                MaxTasks = number;
-                Console.WriteLine($"Максимальное количество задач установлено:{MaxTasks}");
+                _maxTasks = number;
+                Console.WriteLine($"Максимальное количество задач установлено:{_maxTasks}");
             }
         }
-        private bool IsDublicate(ToDoItem task)
+        private bool IsDublicate(ToDoUser user,ToDoItem task)
         {
-            foreach (ToDoItem Task in _tasks)
-            {
-                if (Task.Name == task.Name)
-                    return true;
-            }
-            return false;
+            if (_repository.ExistsByName(user.UserId, task.Name))
+                return true;
+            else
+                return false;
         }
         int ParseAndValidateInt(string? str, int min, int max)
         {

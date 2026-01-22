@@ -1,4 +1,4 @@
-﻿namespace ConsoleApp1.Classes
+﻿namespace ConsoleApp1.Exceptions
 {
     internal class DublicateTaskException : Exception
     {

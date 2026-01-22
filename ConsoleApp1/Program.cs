@@ -1,6 +1,8 @@
 ﻿using ConsoleApp1.Classes;
+using ConsoleApp1.Entities;
+using ConsoleApp1.Infrastructure.DataAccess;
+using ConsoleApp1.Services;
 using Otus.ToDoList.ConsoleBot;
-using System.Reflection;
 
 namespace ConsoleApp1
 {
@@ -11,7 +13,9 @@ namespace ConsoleApp1
             try
             {
                 var botClient = new ConsoleBotClient();
-                var handler = new UpdateHandler(new UserService(), new ToDoService());
+                var userMemory = new InMemoryUserRepository();
+                var serviceMemory = new InMemoryToDoRepository();
+                var handler = new UpdateHandler(new UserService(userMemory), new ToDoService(serviceMemory));
                 botClient.StartReceiving(handler);
             }
             catch (Exception ex)
