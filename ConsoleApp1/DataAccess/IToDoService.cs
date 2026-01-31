@@ -7,11 +7,11 @@ namespace ConsoleApp1.DataAccess
 {
     internal interface IToDoService
     {
-        IReadOnlyList<ToDoItem> GetAllByUserId(Guid userid);
-        IReadOnlyList<ToDoItem> GetActiveByUserId(Guid userId);
-        IReadOnlyList<ToDoItem> Find(Guid userId, string namePrefix);
-        ToDoItem Add(ToDoUser user, string name);
-        void MarkCompleted(Guid id);
-        void Delete(Guid id);
+        Task<IReadOnlyList<ToDoItem>> GetAllByUserIdAsync(Guid userid, CancellationToken ct);
+        Task<IReadOnlyList<ToDoItem>> GetActiveByUserIdAsync(Guid userId, CancellationToken ct);
+        Task<IReadOnlyList<ToDoItem>> FindAsync(Guid userId, string namePrefix, CancellationToken ct);
+        Task<ToDoItem> AddAsync(ToDoUser user, string name, CancellationToken ct);
+        Task MarkCompletedAsync(Guid id, CancellationToken ct);
+        Task DeleteAsync(Guid id, CancellationToken ct);
     }
 }

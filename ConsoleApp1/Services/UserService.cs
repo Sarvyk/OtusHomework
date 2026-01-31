@@ -14,18 +14,18 @@ namespace ConsoleApp1.Services
         {
             _repository = userRepository;
         }
-        public ToDoUser? GetUser(Guid userId)
+        public async Task<ToDoUser?> GetUserAsync(Guid userId, CancellationToken ct)
         {
-            return _repository.GetUser(userId);
+            return await _repository.GetUserAsync(userId, ct);
         }
-        public ToDoUser? GetUserByTelegramUserId(long telegramUserId)
+        public async Task<ToDoUser?> GetUserByTelegramUserIdAsync(long telegramUserId, CancellationToken ct)
         {
-            return _repository.GetUserByTelegramUserId(telegramUserId);
+            return await _repository.GetUserByTelegramUserIdAsync(telegramUserId, ct);
         }
-        public ToDoUser RegisterUser(long telegramUserId, string telegramUserName)
+        public async Task<ToDoUser> RegisterUserAsync(long telegramUserId, string telegramUserName, CancellationToken ct)
         {
             ToDoUser user = new ToDoUser(telegramUserName, telegramUserId);
-            _repository.Add(user);
+            await _repository.AddAsync(user, ct);
             return user;
         }
     }

@@ -12,11 +12,14 @@ namespace ConsoleApp1.Entities
         {
             _toDoService = toDoService;
         }
-        public (int total, int completed, int active, DateTime generatedAt) GetUserStats(Guid userId)
+        public async Task<(int total, int completed, int active, DateTime generatedAt)> GetUserStatsAsync(Guid userId, CancellationToken ct)
         {
-            int total = _toDoService.GetAllByUserId(userId).Count;
-            int completed = _toDoService.GetAllByUserId(userId).Where(x => x.State == ToDoItemState.Completed).Count();
-            int active = _toDoService.GetActiveByUserId(userId).Count;
+            var allItemsTask = _toDoService.GetAllByUserIdAsync(userId, ct);
+            var activeItemsTask = _toDoService.GetActiveByUserIdAsync(userId, ct);
+            await Task.WhenAll(allItemsTask, activeItemsTask);
+            int total = allItemsTask.Result.Count;
+            int completed = allItemsTask.Result.Where(x => x.State == ToDoItemState.Completed).Count();
+            int active = activeItemsTask.Result.Count;
             DateTime generatedAt = DateTime.Now;
             return (total, completed, active, generatedAt);
         }
