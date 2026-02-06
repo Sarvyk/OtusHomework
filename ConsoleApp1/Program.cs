@@ -2,20 +2,69 @@
 using ConsoleApp1.Entities;
 using ConsoleApp1.Infrastructure.DataAccess;
 using ConsoleApp1.Services;
-using Otus.ToDoList.ConsoleBot;
+using DotNetEnv;
+using Telegram.Bot;
+using Telegram.Bot.Types;
 
 namespace ConsoleApp1
 {
     internal class Program
     {
-        static void Main(string[] args)
+        private static readonly string _token;
+        static Program()
         {
-            var botClient = new ConsoleBotClient();
+            Env.Load();
+            _token = Env.GetString("API_TOKEN");
+        }
+        static async Task Main(string[] args)
+        {
+            var botClient = new TelegramBotClient(_token);
             var userMemory = new InMemoryUserRepository();
             var serviceMemory = new InMemoryToDoRepository();
             var handler = new UpdateHandler(new UserService(userMemory), new ToDoService(serviceMemory));
             var cts = new CancellationTokenSource();
-            botClient.StartReceiving(handler, cts.Token);
+            //botClient.DeleteWebhook(true);
+            botClient.StartReceiving(handler, cancellationToken: cts.Token);
+            await SetCommantList(botClient);
+            var myBot = await botClient.GetMe();
+            Console.WriteLine($"-------------Бот \"{myBot.FirstName}\" работает.-------------");
+            await KeyCheck(myBot, cts);
+            await Task.Delay(-1);
+        }
+
+        private static async Task KeyCheck(User bot, CancellationTokenSource cts)
+        {
+            while (true)
+            {
+                var key = Console.ReadKey(true);
+                if (key.Key == ConsoleKey.A)
+                {
+                    Console.WriteLine("Асинхронные операции отменены.");
+                    cts.Cancel();
+                    break;
+                }
+                else
+                {
+                    Console.WriteLine($@"------------Информация о боте------------
+Никнейм:{bot.Username}
+{bot.FirstName}
+{bot.LastName}");
+                }
+            }
+        }
+        private static async Task SetCommantList(ITelegramBotClient botClient)
+        {
+            await botClient.SetMyCommands(new List<BotCommand>()
+            {
+                new BotCommand("help","вызов помощи"),
+                new BotCommand("addtask","`/addtask название`Добавить задачу."),
+                new BotCommand("showtasks","показывает список активных задач"),
+                new BotCommand("showalltasks","показывает все задачи"),
+                new BotCommand("removetask","`/removetask id` удаляет задачу по id."),
+                new BotCommand("completetask","`/completetask id` завершает задачу по id."),
+                new BotCommand("report","статистика по задачам"),
+                new BotCommand("find","`/find назв` выводит список задач, начиная с введённых символов.")
+            });
         }
     }
 }
