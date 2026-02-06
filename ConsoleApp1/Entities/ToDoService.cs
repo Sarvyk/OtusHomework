@@ -1,6 +1,7 @@
 ﻿using ConsoleApp1.DataAccess;
 using ConsoleApp1.Exceptions;
 using ConsoleApp1.Infrastructure.DataAccess;
+using System.Threading.Tasks;
 
 namespace ConsoleApp1.Entities
 {
@@ -15,51 +16,51 @@ namespace ConsoleApp1.Entities
             SetMaxTask();
             SetMaxTaskLength();
         }
-        public ToDoItem Add(ToDoUser user, string name)
+        public async Task<ToDoItem> AddAsync(ToDoUser user, string name, CancellationToken ct)
         {
             ValidateString(name);
-            ToDoItem Task = new ToDoItem(user, name);
-            if(Task.Name.Length > _maxTaskLength)
+            ToDoItem task = new ToDoItem(user, name);
+            if(task.Name.Length > _maxTaskLength)
             {
-                throw new TaskLenghtLimitException(Task.Name.Length, (int)_maxTaskLength);
+                throw new TaskLenghtLimitException(task.Name.Length, (int)_maxTaskLength);
             }
-            else if(_repository.CountActive(user.UserId) == _maxTasks)
+            else if((await _repository.CountActiveAsync(user.UserId, ct)) == _maxTasks)
             {
                 throw new TaskCountLimitException((int)_maxTasks);
             }
-            else if (IsDublicate(user,Task))
+            else if (IsDublicate(user,task,ct))
             {
                 throw new DublicateTaskException(name);
             }
-            _repository.Add(Task);
-            return Task;
+            await _repository.AddAsync(task,ct);
+            return task;
         }
 
-        public void Delete(Guid id)
+        public async Task DeleteAsync(Guid id,CancellationToken ct)
         {
-            _repository.Delete(id);
+            await _repository.DeleteAsync(id,ct);
         }
 
-        public IReadOnlyList<ToDoItem> GetActiveByUserId(Guid userid)
+        public async Task<IReadOnlyList<ToDoItem>> GetActiveByUserIdAsync(Guid userid,CancellationToken ct)
         {
-            return _repository.GetActiveByUserId(userid);
+            return await _repository.GetActiveByUserIdAsync(userid,ct);
         }
 
-        public IReadOnlyList<ToDoItem> GetAllByUserId(Guid userid)
+        public async Task<IReadOnlyList<ToDoItem>> GetAllByUserIdAsync(Guid userid,CancellationToken ct)
         {
-            return _repository.GetAllByUserId(userid);
+            return await _repository.GetAllByUserIdAsync(userid, ct);
         }
-        public IReadOnlyList<ToDoItem> Find(Guid userId, string namePrefix)
+        public async Task<IReadOnlyList<ToDoItem>> FindAsync(Guid userId, string namePrefix, CancellationToken ct)
         {
-            return _repository.Find(userId, item => item.Name.StartsWith(namePrefix));
+            return await _repository.FindAsync(userId, item => item.Name.StartsWith(namePrefix),ct);
         }
 
-        public void MarkCompleted(Guid id)
+        public async Task MarkCompletedAsync(Guid id, CancellationToken ct)
         {
-            ToDoItem? item = _repository.Get(id);
+            ToDoItem? item = await _repository.GetAsync(id, ct);
             if (item != null)
             {
-                _repository.Update(item);
+                await _repository.UpdateAsync(item,ct);
             }
         }
         public void SetMaxTaskLength()
@@ -101,12 +102,9 @@ namespace ConsoleApp1.Entities
                 Console.WriteLine($"Максимальное количество задач установлено:{_maxTasks}");
             }
         }
-        private bool IsDublicate(ToDoUser user,ToDoItem task)
+        private bool IsDublicate(ToDoUser user,ToDoItem task, CancellationToken ct)
         {
-            if (_repository.ExistsByName(user.UserId, task.Name))
-                return true;
-            else
-                return false;
+            return _repository.ExistsByNameAsync(user.UserId, task.Name, ct).Result;
         }
         int ParseAndValidateInt(string? str, int min, int max)
         {

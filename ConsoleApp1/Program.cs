@@ -10,19 +10,12 @@ namespace ConsoleApp1
     {
         static void Main(string[] args)
         {
-            try
-            {
-                var botClient = new ConsoleBotClient();
-                var userMemory = new InMemoryUserRepository();
-                var serviceMemory = new InMemoryToDoRepository();
-                var handler = new UpdateHandler(new UserService(userMemory), new ToDoService(serviceMemory));
-                botClient.StartReceiving(handler);
-            }
-            catch (Exception ex)
-            { 
-                Console.WriteLine(ex.Message);
-            }
-
+            var botClient = new ConsoleBotClient();
+            var userMemory = new InMemoryUserRepository();
+            var serviceMemory = new InMemoryToDoRepository();
+            var handler = new UpdateHandler(new UserService(userMemory), new ToDoService(serviceMemory));
+            var cts = new CancellationTokenSource();
+            botClient.StartReceiving(handler, cts.Token);
         }
     }
 }
