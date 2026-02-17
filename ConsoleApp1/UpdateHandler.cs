@@ -42,14 +42,14 @@ namespace ConsoleApp1.Classes
                         await InfoCommand(botClient, update, ct);
                         break;
                     case string a when a.IndexOf("/addtask") == 0:
-                        if (IsRegistered(botClient, update, ct))
+                        if (await IsRegistered(botClient, update, ct))
                         {
                             await _toDoService.AddAsync(await _userService.GetUserByTelegramUserIdAsync(update.Message.From.Id, ct), a.Replace("/addtask", "").Trim(), ct);
                             await botClient.SendMessage(update.Message.Chat, "Задача успешно добавлена", cancellationToken: ct);
                         }
                         break;
                     case string a when a.IndexOf("/completetask") == 0:
-                        if (IsRegistered(botClient, update, ct))
+                        if (await IsRegistered(botClient, update, ct))
                         {
                             Guid guid = new Guid();
                             if (!Guid.TryParse(a.Replace("/completetask", ""), out guid))
@@ -59,7 +59,7 @@ namespace ConsoleApp1.Classes
                         }
                         break;
                     case string a when a.IndexOf("/removetask") == 0:
-                        if (IsRegistered(botClient, update, ct))
+                        if (await IsRegistered(botClient, update, ct))
                         {
                             Guid guid = new Guid();
                             if (!Guid.TryParse(a.Replace("/removetask", ""), out guid))
@@ -69,19 +69,19 @@ namespace ConsoleApp1.Classes
                         }
                         break;
                     case "/showtasks":
-                        if (IsRegistered(botClient, update, ct))
+                        if (await IsRegistered(botClient, update, ct))
                         {
                             await ShowTasks(botClient, update, true, ct);
                         }
                         break;
                     case "/showalltasks":
-                        if (IsRegistered(botClient, update, ct))
+                        if (await IsRegistered(botClient, update, ct))
                         {
                             await ShowTasks(botClient, update, false, ct);
                         }
                         break;
                     case "/report":
-                        if (IsRegistered(botClient, update, ct))
+                        if (await IsRegistered(botClient, update, ct))
                         {
                             IToDoReportService report = new ToDoReportService(_toDoService);
                             var stat = (await report.GetUserStatsAsync((await _userService.GetUserByTelegramUserIdAsync(update.Message.From.Id, ct)).UserId, ct));
@@ -89,7 +89,7 @@ namespace ConsoleApp1.Classes
                         }
                         break;
                     case string a when a.IndexOf("/find") == 0:
-                        if (IsRegistered(botClient, update, ct))
+                        if (await IsRegistered(botClient, update, ct))
                         {
                             await botClient.SendMessage(update.Message.Chat, await FindTasks(update, a.Replace("/find", "").Trim(), ct), cancellationToken: ct);
                         }
@@ -123,12 +123,12 @@ namespace ConsoleApp1.Classes
         private async Task ShowTasks(ITelegramBotClient botClient, Update update, bool isActive, CancellationToken ct)
         {
             Guid guid = (await _userService.GetUserByTelegramUserIdAsync(update.Message.From.Id, ct)).UserId;
-            List<ToDoItem> data = new List<ToDoItem>();
+            IReadOnlyList<ToDoItem> data = new List<ToDoItem>();
             string result = "\r\n";
             if(isActive)
-                data = (await _toDoService.GetActiveByUserIdAsync(guid, ct)).ToList();
+                data = await _toDoService.GetActiveByUserIdAsync(guid, ct);
             else
-                data = (await _toDoService.GetAllByUserIdAsync(guid, ct)).ToList();
+                data = await _toDoService.GetAllByUserIdAsync(guid, ct);
             int i = 1;
             foreach(ToDoItem Task in data)
             {
@@ -164,7 +164,7 @@ namespace ConsoleApp1.Classes
         private async Task<string> FindTasks(Update update, string namePrefix, CancellationToken ct)
         {
             Guid guid = (await _userService.GetUserByTelegramUserIdAsync(update.Message.From.Id, ct)).UserId;
-            var tasks = _toDoService.FindAsync(guid, namePrefix, ct).Result;
+            var tasks = await _toDoService.FindAsync(guid, namePrefix, ct);
             string result = string.Empty;
             int i = 1;
             foreach (ToDoItem Task in tasks)
@@ -177,7 +177,7 @@ namespace ConsoleApp1.Classes
         }
         private async Task StartCommand(ITelegramBotClient botClient, Update update, CancellationToken ct)
         {
-            ToDoUser? User = _userService.GetUserByTelegramUserIdAsync(update.Message.From.Id, ct).Result;
+            ToDoUser? User = await _userService.GetUserByTelegramUserIdAsync(update.Message.From.Id, ct);
             ReplyKeyboardMarkup keyboard = new ReplyKeyboardMarkup(new List<KeyboardButton>
                 {
                     new KeyboardButton("/showalltasks"),
@@ -194,12 +194,12 @@ namespace ConsoleApp1.Classes
                 await botClient.SendMessage(update.Message.Chat, $"{User.TelegramUserName}, добро пожаловать!", replyMarkup: keyboard, cancellationToken: ct);
             }
         }
-        private bool IsRegistered(ITelegramBotClient bot,Update update,CancellationToken ct)
+        private async Task<bool> IsRegistered(ITelegramBotClient bot,Update update,CancellationToken ct)
         {
-            if (_userService.GetUserByTelegramUserIdAsync(update.Message.From.Id,ct).Result == null)
+            if (await _userService.GetUserByTelegramUserIdAsync(update.Message.From.Id,ct) == null)
             {
-                bot.SendMessage(update.Message.Chat, "Команда доступна только для зарегистрированных пользователей. /start Для запуска.", cancellationToken: ct);
-                return false;
+                await bot.SendMessage(update.Message.Chat, "Команда доступна только для зарегистрированных пользователей. /start Для запуска.", cancellationToken: ct);
+                return false; 
             }
             else
                 return true;
