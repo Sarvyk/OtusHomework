@@ -66,9 +66,16 @@ namespace ConsoleApp1.Infrastructure.DataAccess
             return (await GetTasks(userId, ct)).Where(x => x.User.UserId == userId).ToList();
         }
 
-        public async Task<ToDoItem?> GetAsync(Guid userId, Guid id, CancellationToken ct)
+        public async Task<ToDoItem?> GetAsync(Guid id, CancellationToken ct)
         {
-            return (await GetTasks(userId, ct)).FirstOrDefault(x => x.id == id);
+            if (!_indexes.ContainsKey(id.ToString()))
+                throw new ArgumentException("Такой задачи нет");
+            ToDoItem item;
+            using (FileStream stream = File.OpenRead(Path.Combine(_storagePath, _indexes[id.ToString()], $"{id.ToString()}.json")))
+            {
+                item = await JsonSerializer.DeserializeAsync<ToDoItem>(stream, cancellationToken: ct);
+            }
+            return item;
         }
 
         public async Task UpdateAsync(ToDoItem item, CancellationToken ct)

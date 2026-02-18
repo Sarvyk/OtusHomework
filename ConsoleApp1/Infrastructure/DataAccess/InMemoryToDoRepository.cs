@@ -39,7 +39,7 @@ namespace ConsoleApp1.Infrastructure.DataAccess
             return items.Where(predicate).ToList();
         }
 
-        public async Task<ToDoItem?> GetAsync(Guid userId, Guid id, CancellationToken ct)
+        public async Task<ToDoItem?> GetAsync(Guid id, CancellationToken ct)
         {
             return _items.FirstOrDefault(x => x.id == id);
         }

@@ -52,10 +52,9 @@ namespace ConsoleApp1.Classes
                         if (await IsRegistered(botClient, update, ct))
                         {
                             Guid guid = new Guid();
-                            Guid guidUser = (await _userService.GetUserByTelegramUserIdAsync(update.Message.From.Id, ct)).UserId;
                             if (!Guid.TryParse(a.Replace("/completetask", ""), out guid))
                                 throw new ArgumentException("Такого id нет!");
-                            await _toDoService.MarkCompletedAsync(guidUser, guid, ct);
+                            await _toDoService.MarkCompletedAsync(guid, ct);
                             await botClient.SendMessage(update.Message.Chat, "Задача завершена", cancellationToken: ct);
                         }
                         break;

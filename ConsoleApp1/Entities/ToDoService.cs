@@ -55,9 +55,9 @@ namespace ConsoleApp1.Entities
             return await _repository.FindAsync(userId, item => item.Name.StartsWith(namePrefix),ct);
         }
 
-        public async Task MarkCompletedAsync(Guid userId, Guid id, CancellationToken ct)
+        public async Task MarkCompletedAsync(Guid id, CancellationToken ct)
         {
-            ToDoItem? item = await _repository.GetAsync(userId, id, ct);
+            ToDoItem? item = await _repository.GetAsync(id, ct);
             if (item != null)
             {
                 await _repository.UpdateAsync(item,ct);
