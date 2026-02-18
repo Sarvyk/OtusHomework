@@ -3,6 +3,7 @@ using ConsoleApp1.Entities;
 using ConsoleApp1.Infrastructure.DataAccess;
 using ConsoleApp1.Services;
 using DotNetEnv;
+using System.Net.WebSockets;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 
@@ -11,6 +12,7 @@ namespace ConsoleApp1
     internal class Program
     {
         private static readonly string _token;
+        const string storagePath = "UserStorage";
         static Program()
         {
             Env.Load();
@@ -19,8 +21,10 @@ namespace ConsoleApp1
         static async Task Main(string[] args)
         {
             var botClient = new TelegramBotClient(_token);
-            var userMemory = new InMemoryUserRepository();
-            var serviceMemory = new InMemoryToDoRepository();
+            //var userMemory = new InMemoryUserRepository();
+            var userMemory = new FileUserRepository(storagePath);
+            //var serviceMemory = new InMemoryToDoRepository();
+            var serviceMemory = new FileToDoRepository(storagePath);
             var handler = new UpdateHandler(new UserService(userMemory), new ToDoService(serviceMemory));
             var cts = new CancellationTokenSource();
             //botClient.DeleteWebhook(true);

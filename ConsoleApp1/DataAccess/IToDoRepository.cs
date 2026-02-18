@@ -11,7 +11,7 @@ namespace ConsoleApp1.DataAccess
         //Возвращает ToDoItem для UserId со статусом Active
         Task<IReadOnlyList<ToDoItem>> GetActiveByUserIdAsync(Guid userId, CancellationToken ct);
         Task<IReadOnlyList<ToDoItem>> FindAsync(Guid userId, Func<ToDoItem, bool> predicate, CancellationToken ct);
-        Task<ToDoItem?> GetAsync(Guid id, CancellationToken ct);
+        Task<ToDoItem?> GetAsync(Guid userId, Guid id, CancellationToken ct);
         Task AddAsync(ToDoItem item, CancellationToken ct);
         Task UpdateAsync(ToDoItem item, CancellationToken ct);
         Task DeleteAsync(Guid id, CancellationToken ct);
