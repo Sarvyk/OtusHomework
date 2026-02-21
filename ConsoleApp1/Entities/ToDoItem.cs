@@ -6,10 +6,10 @@ namespace ConsoleApp1.Entities
 {
     internal class ToDoItem
     {
-        public Guid id { get; }
-        public ToDoUser User { get;}
-        public string Name { get; }
-        public DateTime CreatedAt { get; }
+        public Guid id { get; set; }
+        public ToDoUser User { get; set; }
+        public string Name { get; set; }
+        public DateTime CreatedAt { get; set; }
         private ToDoItemState _state;
         public ToDoItemState State { 
             get 
@@ -23,6 +23,7 @@ namespace ConsoleApp1.Entities
             }
         }
         public DateTime? StateChangedAt { get; private set; }
+        public ToDoItem() {}
         public ToDoItem(ToDoUser user, string name)
         {
             id = Guid.NewGuid();
