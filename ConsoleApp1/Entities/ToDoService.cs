@@ -16,10 +16,10 @@ namespace ConsoleApp1.Entities
             SetMaxTask();
             SetMaxTaskLength();
         }
-        public async Task<ToDoItem> AddAsync(ToDoUser user, string name, CancellationToken ct)
+        public async Task<ToDoItem> AddAsync(ToDoUser user, string name, DateTime deadLine, CancellationToken ct)
         {
             ValidateString(name);
-            ToDoItem task = new ToDoItem(user, name);
+            ToDoItem task = new ToDoItem(user, name, deadLine);
             if(task.Name.Length > _maxTaskLength)
             {
                 throw new TaskLenghtLimitException(task.Name.Length, (int)_maxTaskLength);
