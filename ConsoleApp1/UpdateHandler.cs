@@ -1,6 +1,7 @@
 ﻿using ConsoleApp1.DataAccess;
 using ConsoleApp1.Entities;
 using ConsoleApp1.Exceptions;
+using ConsoleApp1.Helpers;
 using ConsoleApp1.Infrastructure.DataAccess;
 using ConsoleApp1.Scenarios;
 using ConsoleApp1.Services;
@@ -35,20 +36,13 @@ namespace ConsoleApp1.Classes
         }
         public async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken ct)
         {
-            ReplyKeyboardMarkup keyboard = new ReplyKeyboardMarkup(new List<KeyboardButton>
-                {
-                    new KeyboardButton("/addtask"),
-                    new KeyboardButton("/showalltasks"),
-                    new KeyboardButton("/showtasks"),
-                    new KeyboardButton("/report")
-                });
             ScenarioContext? context;
             try
             {
                 if (update.Message.Text.StartsWith("/cancel"))
                 {
                     await _scenarioContextRepository.ResetContext(update.Message.From.Id, ct);
-                    await botClient.SendMessage(update.Message.Chat, "Сценарий отменён.", replyMarkup: keyboard, cancellationToken: ct);
+                    await botClient.SendMessage(update.Message.Chat, "Сценарий отменён.", replyMarkup: ReplyKeyboardManager.SetStandartListButton(), cancellationToken: ct);
                     return;
                 }
                 context = await _scenarioContextRepository.GetContext(update.Message.From.Id, ct);
@@ -130,22 +124,22 @@ namespace ConsoleApp1.Classes
             }
             catch (ArgumentException ex)
             {
-                await botClient.SendMessage(update.Message.Chat, ex.Message, replyMarkup: keyboard,  cancellationToken: ct);
+                await botClient.SendMessage(update.Message.Chat, ex.Message, replyMarkup: ReplyKeyboardManager.SetStandartListButton(),  cancellationToken: ct);
                 await _scenarioContextRepository.ResetContext(update.Message.From.Id, ct);
             }
             catch (TaskCountLimitException ex)
             {
-                await botClient.SendMessage(update.Message.Chat, ex.Message, replyMarkup: keyboard, cancellationToken: ct);
+                await botClient.SendMessage(update.Message.Chat, ex.Message, replyMarkup: ReplyKeyboardManager.SetStandartListButton(), cancellationToken: ct);
                 await _scenarioContextRepository.ResetContext(update.Message.From.Id, ct);
             }
             catch (TaskLenghtLimitException ex)
             {
-                await botClient.SendMessage(update.Message.Chat, ex.Message, replyMarkup: keyboard, cancellationToken: ct);
+                await botClient.SendMessage(update.Message.Chat, ex.Message, replyMarkup: ReplyKeyboardManager.SetStandartListButton(), cancellationToken: ct);
                 await _scenarioContextRepository.ResetContext(update.Message.From.Id, ct);
             }
             catch(DublicateTaskException ex)
             {
-                await botClient.SendMessage(update.Message.Chat, ex.Message, replyMarkup: keyboard, cancellationToken: ct);
+                await botClient.SendMessage(update.Message.Chat, ex.Message, replyMarkup: ReplyKeyboardManager.SetStandartListButton(), cancellationToken: ct);
                 await _scenarioContextRepository.ResetContext(update.Message.From.Id, ct);
             }
             catch (Exception ex)
