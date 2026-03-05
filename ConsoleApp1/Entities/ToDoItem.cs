@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ConsoleApp1.Entities.Enums;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -22,15 +23,17 @@ namespace ConsoleApp1.Entities
                 StateChangedAt = DateTime.UtcNow;
             }
         }
+        public DateTime DeadLine { get; set; }
         public DateTime? StateChangedAt { get; private set; }
         public ToDoItem() {}
-        public ToDoItem(ToDoUser user, string name)
+        public ToDoItem(ToDoUser user, string name, DateTime deadLine)
         {
             id = Guid.NewGuid();
             User = user;
             Name = name;
             CreatedAt = DateTime.UtcNow;
             State = ToDoItemState.Active;
+            DeadLine = deadLine;
         }
     }
 }

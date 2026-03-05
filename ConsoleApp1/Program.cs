@@ -1,6 +1,7 @@
 ﻿using ConsoleApp1.Classes;
 using ConsoleApp1.Entities;
 using ConsoleApp1.Infrastructure.DataAccess;
+using ConsoleApp1.Scenarios;
 using ConsoleApp1.Services;
 using DotNetEnv;
 using System.Net.WebSockets;
@@ -25,7 +26,13 @@ namespace ConsoleApp1
             var userMemory = new FileUserRepository(storagePath);
             //var serviceMemory = new InMemoryToDoRepository();
             var serviceMemory = new FileToDoRepository(storagePath);
-            var handler = new UpdateHandler(new UserService(userMemory), new ToDoService(serviceMemory));
+            var userSerivce = new UserService(userMemory);
+            var toDoService = new ToDoService(serviceMemory);
+            var scenarios = new List<IScenario>()
+            {
+                new AddTaskScenario(userSerivce, toDoService)
+            };
+            var handler = new UpdateHandler(userSerivce, toDoService, scenarios, new InMemoryScenarioContextRepository());
             var cts = new CancellationTokenSource();
             //botClient.DeleteWebhook(true);
             botClient.StartReceiving(handler, cancellationToken: cts.Token);

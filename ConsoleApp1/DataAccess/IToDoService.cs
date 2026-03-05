@@ -10,7 +10,7 @@ namespace ConsoleApp1.DataAccess
         Task<IReadOnlyList<ToDoItem>> GetAllByUserIdAsync(Guid userid, CancellationToken ct);
         Task<IReadOnlyList<ToDoItem>> GetActiveByUserIdAsync(Guid userId, CancellationToken ct);
         Task<IReadOnlyList<ToDoItem>> FindAsync(Guid userId, string namePrefix, CancellationToken ct);
-        Task<ToDoItem> AddAsync(ToDoUser user, string name, CancellationToken ct);
+        Task<ToDoItem> AddAsync(ToDoUser user, string name, DateTime deadLine, CancellationToken ct);
         Task MarkCompletedAsync(Guid id, CancellationToken ct);
         Task DeleteAsync(Guid id, CancellationToken ct);
     }

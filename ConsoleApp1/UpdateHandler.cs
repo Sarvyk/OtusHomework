@@ -1,9 +1,14 @@
 ﻿using ConsoleApp1.DataAccess;
 using ConsoleApp1.Entities;
 using ConsoleApp1.Exceptions;
+using ConsoleApp1.Helpers;
+using ConsoleApp1.Infrastructure.DataAccess;
+using ConsoleApp1.Scenarios;
 using ConsoleApp1.Services;
 using Sprache;
 using System;
+using System.Collections;
+using System.ComponentModel.DataAnnotations;
 using System.Reflection;
 using System.Text;
 using System.Threading;
@@ -20,15 +25,32 @@ namespace ConsoleApp1.Classes
     {
         private readonly IUserService _userService;
         private readonly IToDoService _toDoService;
-        public UpdateHandler(IUserService userService, IToDoService toDoService)
+        private readonly IEnumerable _scenarios;
+        private readonly IScenarioContextRepository _scenarioContextRepository;
+        public UpdateHandler(IUserService userService, IToDoService toDoService, IEnumerable scenarios, IScenarioContextRepository contextRepository)
         {
             _userService = userService;
             _toDoService = toDoService;
+            _scenarios = scenarios;
+            _scenarioContextRepository = contextRepository;
         }
         public async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken ct)
         {
+            ScenarioContext? context;
             try
             {
+                if (update.Message.Text.StartsWith("/cancel"))
+                {
+                    await _scenarioContextRepository.ResetContext(update.Message.From.Id, ct);
+                    await botClient.SendMessage(update.Message.Chat, "Сценарий отменён.", replyMarkup: ReplyKeyboardManager.SetStandartListButton(), cancellationToken: ct);
+                    return;
+                }
+                context = await _scenarioContextRepository.GetContext(update.Message.From.Id, ct);
+                if (context != null)
+                {
+                    await ProcessScenario(botClient, context, update.Message, ct);
+                    return;
+                }
                 switch (update.Message.Text)
                 {
                     case "/start":
@@ -41,11 +63,12 @@ namespace ConsoleApp1.Classes
                     case "/info":
                         await InfoCommand(botClient, update, ct);
                         break;
-                    case string a when a.IndexOf("/addtask") == 0:
+                    case "/addtask":
                         if (await IsRegistered(botClient, update, ct))
                         {
-                            await _toDoService.AddAsync(await _userService.GetUserByTelegramUserIdAsync(update.Message.From.Id, ct), a.Replace("/addtask", "").Trim(), ct);
-                            await botClient.SendMessage(update.Message.Chat, "Задача успешно добавлена", cancellationToken: ct);
+                            context = new ScenarioContext(ScenarioType.AddTask);
+                            await _scenarioContextRepository.SetContext(update.Message.From.Id, context, ct);
+                            await ProcessScenario(botClient, context, update.Message, ct);
                         }
                         break;
                     case string a when a.IndexOf("/completetask") == 0:
@@ -99,27 +122,56 @@ namespace ConsoleApp1.Classes
                         break;
                 }
             }
-            catch(ArgumentException ex)
+            catch (ArgumentException ex)
             {
-                await botClient.SendMessage(update.Message.Chat, ex.Message, cancellationToken: ct);
+                await botClient.SendMessage(update.Message.Chat, ex.Message, replyMarkup: ReplyKeyboardManager.SetStandartListButton(),  cancellationToken: ct);
+                await _scenarioContextRepository.ResetContext(update.Message.From.Id, ct);
             }
-            catch(TaskCountLimitException ex)
+            catch (TaskCountLimitException ex)
             {
-                await botClient.SendMessage(update.Message.Chat, ex.Message, cancellationToken: ct);
-    }
-            catch(TaskLenghtLimitException ex)
+                await botClient.SendMessage(update.Message.Chat, ex.Message, replyMarkup: ReplyKeyboardManager.SetStandartListButton(), cancellationToken: ct);
+                await _scenarioContextRepository.ResetContext(update.Message.From.Id, ct);
+            }
+            catch (TaskLenghtLimitException ex)
             {
-                await botClient.SendMessage(update.Message.Chat, ex.Message, cancellationToken: ct);
-}
-            catch(Exception ex)
+                await botClient.SendMessage(update.Message.Chat, ex.Message, replyMarkup: ReplyKeyboardManager.SetStandartListButton(), cancellationToken: ct);
+                await _scenarioContextRepository.ResetContext(update.Message.From.Id, ct);
+            }
+            catch(DublicateTaskException ex)
+            {
+                await botClient.SendMessage(update.Message.Chat, ex.Message, replyMarkup: ReplyKeyboardManager.SetStandartListButton(), cancellationToken: ct);
+                await _scenarioContextRepository.ResetContext(update.Message.From.Id, ct);
+            }
+            catch (Exception ex)
             {
                 await HandleErrorAsync(botClient, ex, HandleErrorSource.HandleUpdateError, ct);
+                await _scenarioContextRepository.ResetContext(update.Message.From.Id, ct);
             }
         }
         public async Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, HandleErrorSource handleError, CancellationToken ct)
         {
             Console.WriteLine(exception.Message);
         }
+
+        private async Task ProcessScenario(ITelegramBotClient botClient, ScenarioContext context, Message msg, CancellationToken ct)
+        {
+            IScenario scenario = GetScenario(context.CurrentScenario);
+            if (await scenario.HandleMessageAsync(botClient, context, msg, ct) == ScenarioResult.Completed)
+                await _scenarioContextRepository.ResetContext(msg.From.Id, ct);
+        }
+
+        private IScenario GetScenario(ScenarioType scenarioType)
+        {
+            foreach (IScenario scenario in _scenarios)
+            {
+                if(scenario.CanHandle(scenarioType))
+                {
+                    return scenario;
+                }
+            }
+            throw new ArgumentException("Сценарий не найден");
+        }
+
         private async Task ShowTasks(ITelegramBotClient botClient, Update update, bool isActive, CancellationToken ct)
         {
             Guid guid = (await _userService.GetUserByTelegramUserIdAsync(update.Message.From.Id, ct)).UserId;
@@ -133,9 +185,9 @@ namespace ConsoleApp1.Classes
             foreach(ToDoItem Task in data)
             {
                 if(isActive)
-                    result += $"{i++})ID:`{Task.id}`, Название:{Task.Name}, Дата создания:{Task.CreatedAt}\r\n";
+                    result += $"{i++})ID:`{Task.id}`, Название:{Task.Name}, Дата создания:{Task.CreatedAt}, Дедлайн:{Task.DeadLine}\r\n";
                 else
-                    result += $"{i++})ID:`{Task.id}`, Название:{Task.Name}, Дата создания:{Task.CreatedAt}, Статус:{Task.State}, Изменение статуса:{Task.StateChangedAt}\r\n";
+                    result += $"{i++})ID:`{Task.id}`, Название:{Task.Name}, Дата создания:{Task.CreatedAt}, Дедлайн:{Task.DeadLine}, Статус:{Task.State}, Изменение статуса:{Task.StateChangedAt}\r\n";
             }
             result = result.Remove(result.Length - 2);
             result = EscapeString(result);
@@ -180,6 +232,7 @@ namespace ConsoleApp1.Classes
             ToDoUser? User = await _userService.GetUserByTelegramUserIdAsync(update.Message.From.Id, ct);
             ReplyKeyboardMarkup keyboard = new ReplyKeyboardMarkup(new List<KeyboardButton>
                 {
+                    new KeyboardButton("/addtask"),
                     new KeyboardButton("/showalltasks"),
                     new KeyboardButton("/showtasks"),
                     new KeyboardButton("/report")
@@ -210,7 +263,7 @@ namespace ConsoleApp1.Classes
                 await botClient.SendMessage(update.Message.Chat, $"Используйте следующий список команд для работы:\r\n" +
                 "/help - вывод помощи\r\n" +
                 "/info - вывод информации по программе\r\n" +
-                "/addtask [название] - добавить задачу\r\n" +
+                "/addtask - добавить задачу\r\n" +
                 "/showtasks - показать список задач\r\n" +
                 "/showalltasks - показать все задачи\r\n" +
                 "/completetask [id] - завершить задачу\r\n" +

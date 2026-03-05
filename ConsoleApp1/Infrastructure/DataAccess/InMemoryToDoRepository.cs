@@ -1,5 +1,6 @@
 ﻿using ConsoleApp1.DataAccess;
 using ConsoleApp1.Entities;
+using ConsoleApp1.Entities.Enums;
 using System;
 using System.Collections.Generic;
 using System.Text;
