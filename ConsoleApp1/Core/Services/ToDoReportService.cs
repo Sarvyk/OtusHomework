@@ -1,10 +1,10 @@
-﻿using ConsoleApp1.DataAccess;
-using ConsoleApp1.Entities.Enums;
+﻿using ConsoleApp1.Core.Entities.Enums;
+using ConsoleApp1.Core.Interfaces.DataAccess;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace ConsoleApp1.Entities
+namespace ConsoleApp1.Core.Services
 {
     internal class ToDoReportService : IToDoReportService
     {

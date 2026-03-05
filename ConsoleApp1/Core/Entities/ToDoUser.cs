@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace ConsoleApp1.Entities
+namespace ConsoleApp1.Core.Entities
 {
     internal class ToDoUser
     {

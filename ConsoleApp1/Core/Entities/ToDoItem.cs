@@ -1,9 +1,9 @@
-﻿using ConsoleApp1.Entities.Enums;
+﻿using ConsoleApp1.Core.Entities.Enums;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace ConsoleApp1.Entities
+namespace ConsoleApp1.Core.Entities
 {
     internal class ToDoItem
     {

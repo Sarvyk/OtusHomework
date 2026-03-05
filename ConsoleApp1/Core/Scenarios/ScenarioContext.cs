@@ -1,4 +1,6 @@
-﻿namespace ConsoleApp1.Scenarios
+﻿using ConsoleApp1.Core.Scenarios.Enums;
+
+namespace ConsoleApp1.Core.Scenarios
 {
     internal class ScenarioContext
     {

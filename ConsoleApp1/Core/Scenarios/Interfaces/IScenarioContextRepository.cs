@@ -1,9 +1,9 @@
-﻿using ConsoleApp1.Scenarios;
+﻿using ConsoleApp1.Core.Scenarios;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace ConsoleApp1.Infrastructure.DataAccess
+namespace ConsoleApp1.Core.Scenarios.Interfaces
 {
     internal interface IScenarioContextRepository
     {

@@ -1,10 +1,9 @@
 ﻿using ConsoleApp1.Classes;
-using ConsoleApp1.Entities;
+using ConsoleApp1.Core.Scenarios;
+using ConsoleApp1.Core.Scenarios.Interfaces;
+using ConsoleApp1.Core.Services;
 using ConsoleApp1.Infrastructure.DataAccess;
-using ConsoleApp1.Scenarios;
-using ConsoleApp1.Services;
 using DotNetEnv;
-using System.Net.WebSockets;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 

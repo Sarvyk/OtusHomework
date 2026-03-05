@@ -1,4 +1,4 @@
-﻿namespace ConsoleApp1.Exceptions
+﻿namespace ConsoleApp1.Core.Exceptions
 {
     internal class TaskCountLimitException : Exception
     {

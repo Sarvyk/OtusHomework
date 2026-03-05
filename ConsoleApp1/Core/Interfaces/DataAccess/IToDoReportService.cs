@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace ConsoleApp1.DataAccess
+namespace ConsoleApp1.Core.Interfaces.DataAccess
 {
     internal interface IToDoReportService
     {

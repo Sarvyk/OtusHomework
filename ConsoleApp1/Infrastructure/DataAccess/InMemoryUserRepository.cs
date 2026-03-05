@@ -1,5 +1,5 @@
-﻿using ConsoleApp1.DataAccess;
-using ConsoleApp1.Entities;
+﻿using ConsoleApp1.Core.Entities;
+using ConsoleApp1.Core.Interfaces.DataAccess;
 using System;
 using System.Collections.Generic;
 using System.Text;

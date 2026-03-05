@@ -1,4 +1,4 @@
-﻿namespace ConsoleApp1.Entities.Enums
+﻿namespace ConsoleApp1.Core.Entities.Enums
 {
     internal enum IndexOperation
     {

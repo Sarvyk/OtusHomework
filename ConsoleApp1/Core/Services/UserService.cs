@@ -1,11 +1,11 @@
-﻿using ConsoleApp1.DataAccess;
-using ConsoleApp1.Entities;
+﻿using ConsoleApp1.Core.Entities;
+using ConsoleApp1.Core.Interfaces.DataAccess;
 using ConsoleApp1.Infrastructure.DataAccess;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace ConsoleApp1.Services
+namespace ConsoleApp1.Core.Services
 {
     internal class UserService : IUserService
     {

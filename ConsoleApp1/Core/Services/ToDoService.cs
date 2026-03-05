@@ -1,9 +1,8 @@
-﻿using ConsoleApp1.DataAccess;
-using ConsoleApp1.Exceptions;
-using ConsoleApp1.Infrastructure.DataAccess;
-using System.Threading.Tasks;
+﻿using ConsoleApp1.Core.Entities;
+using ConsoleApp1.Core.Exceptions;
+using ConsoleApp1.Core.Interfaces.DataAccess;
 
-namespace ConsoleApp1.Entities
+namespace ConsoleApp1.Core.Services
 {
     internal class ToDoService : IToDoService
     {

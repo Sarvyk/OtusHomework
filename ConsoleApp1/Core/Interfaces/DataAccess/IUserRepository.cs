@@ -1,6 +1,6 @@
-﻿using ConsoleApp1.Entities;
+﻿using ConsoleApp1.Core.Entities;
 
-namespace ConsoleApp1.DataAccess
+namespace ConsoleApp1.Core.Interfaces.DataAccess
 {
     internal interface IUserRepository
     {

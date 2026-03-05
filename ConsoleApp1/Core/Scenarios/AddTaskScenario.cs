@@ -1,6 +1,7 @@
-﻿using ConsoleApp1.DataAccess;
+﻿using ConsoleApp1.Core.Interfaces.DataAccess;
+using ConsoleApp1.Core.Scenarios.Enums;
+using ConsoleApp1.Core.Scenarios.Interfaces;
 using ConsoleApp1.Helpers;
-using ConsoleApp1.Services;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -10,7 +11,7 @@ using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.ReplyMarkups;
 
-namespace ConsoleApp1.Scenarios
+namespace ConsoleApp1.Core.Scenarios
 {
     internal class AddTaskScenario : IScenario
     {
