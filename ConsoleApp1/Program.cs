@@ -2,6 +2,7 @@
 using ConsoleApp1.Core.Scenarios;
 using ConsoleApp1.Core.Scenarios.Interfaces;
 using ConsoleApp1.Core.Services;
+using ConsoleApp1.Helpers;
 using ConsoleApp1.Infrastructure.DataAccess;
 using DotNetEnv;
 using Telegram.Bot;
@@ -20,18 +21,21 @@ namespace ConsoleApp1
         }
         static async Task Main(string[] args)
         {
+            FileLinkIndex.Initialize(storagePath);
             var botClient = new TelegramBotClient(_token);
-            //var userMemory = new InMemoryUserRepository();
             var userMemory = new FileUserRepository(storagePath);
-            //var serviceMemory = new InMemoryToDoRepository();
-            var serviceMemory = new FileToDoRepository(storagePath);
+            var serviceRepository = new FileToDoRepository(storagePath);
+            var listRepository = new FileToDoListRepository(storagePath);
             var userSerivce = new UserService(userMemory);
-            var toDoService = new ToDoService(serviceMemory);
+            var toDoService = new ToDoService(serviceRepository);
+            var toDoListService = new ToDoListService(listRepository);
             var scenarios = new List<IScenario>()
             {
-                new AddTaskScenario(userSerivce, toDoService)
+                new AddTaskScenario(userSerivce, toDoListService, toDoService),
+                new AddListScenario(userSerivce, toDoListService),
+                new DeleteListScenario(userSerivce, toDoListService, toDoService)
             };
-            var handler = new UpdateHandler(userSerivce, toDoService, scenarios, new InMemoryScenarioContextRepository());
+            var handler = new UpdateHandler(userSerivce, toDoService, new ToDoListService(new FileToDoListRepository(storagePath)), scenarios, new InMemoryScenarioContextRepository());
             var cts = new CancellationTokenSource();
             //botClient.DeleteWebhook(true);
             botClient.StartReceiving(handler, cancellationToken: cts.Token);
@@ -68,8 +72,7 @@ namespace ConsoleApp1
             {
                 new BotCommand("help","вызов помощи"),
                 new BotCommand("addtask","`/addtask название`Добавить задачу."),
-                new BotCommand("showtasks","показывает список активных задач"),
-                new BotCommand("showalltasks","показывает все задачи"),
+                new BotCommand("show","показывает список листов задач"),
                 new BotCommand("removetask","`/removetask id` удаляет задачу по id."),
                 new BotCommand("completetask","`/completetask id` завершает задачу по id."),
                 new BotCommand("report","статистика по задачам"),

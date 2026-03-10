@@ -7,6 +7,8 @@ namespace ConsoleApp1.Core.Scenarios.Enums
     internal enum ScenarioType
     {
         None,
-        AddTask
+        AddTask,
+        AddList,
+        DeleteList
     }
 }

@@ -1,6 +1,7 @@
 ﻿using ConsoleApp1.Core.Entities;
 using ConsoleApp1.Core.Exceptions;
 using ConsoleApp1.Core.Interfaces.DataAccess;
+using ConsoleApp1.Helpers;
 
 namespace ConsoleApp1.Core.Services
 {
@@ -15,10 +16,10 @@ namespace ConsoleApp1.Core.Services
             SetMaxTask();
             SetMaxTaskLength();
         }
-        public async Task<ToDoItem> AddAsync(ToDoUser user, string name, DateTime deadLine, CancellationToken ct)
+        public async Task<ToDoItem> AddAsync(ToDoUser user, string name, DateTime deadLine, ToDoList? toDoList, CancellationToken ct)
         {
             ValidateString(name);
-            ToDoItem task = new ToDoItem(user, name, deadLine);
+            ToDoItem task = new ToDoItem(user, name, deadLine, toDoList);
             if(task.Name.Length > _maxTaskLength)
             {
                 throw new TaskLenghtLimitException(task.Name.Length, (int)_maxTaskLength);
@@ -56,10 +57,10 @@ namespace ConsoleApp1.Core.Services
 
         public async Task MarkCompletedAsync(Guid id, CancellationToken ct)
         {
-            ToDoItem? item = await _repository.GetAsync(id, ct);
-            if (item != null)
+            ToDoItem? task = await _repository.GetAsync(id, ct);
+            if (task != null)
             {
-                await _repository.UpdateAsync(item,ct);
+                await _repository.UpdateAsync(task,ct);
             }
         }
         public void SetMaxTaskLength()
@@ -121,6 +122,17 @@ namespace ConsoleApp1.Core.Services
         {
             if (string.IsNullOrWhiteSpace(str))
                 throw new ArgumentException("Строка не должна быть Null или пустой");
+        }
+
+        public async Task<IReadOnlyList<ToDoItem>> GetByUserIdAndList(Guid userId, Guid? listId, CancellationToken ct)
+        {
+            List<ToDoItem> taskList = new List<ToDoItem>(); 
+            foreach(ToDoItem task in await _repository.GetAllByUserIdAsync(userId,ct))
+            {
+                if (task.ToDoList != null && task.ToDoList.Id == listId)
+                    taskList.Add(task);
+            }
+            return taskList;
         }
     }
 }

@@ -25,8 +25,9 @@ namespace ConsoleApp1.Core.Entities
         }
         public DateTime DeadLine { get; set; }
         public DateTime? StateChangedAt { get; private set; }
+        public ToDoList? ToDoList { get; set; }
         public ToDoItem() {}
-        public ToDoItem(ToDoUser user, string name, DateTime deadLine)
+        public ToDoItem(ToDoUser user, string name, DateTime deadLine, ToDoList? toDoList)
         {
             id = Guid.NewGuid();
             User = user;
@@ -34,6 +35,7 @@ namespace ConsoleApp1.Core.Entities
             CreatedAt = DateTime.UtcNow;
             State = ToDoItemState.Active;
             DeadLine = deadLine;
+            ToDoList = toDoList;
         }
     }
 }
