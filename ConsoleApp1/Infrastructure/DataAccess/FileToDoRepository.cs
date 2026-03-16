@@ -1,6 +1,7 @@
-﻿using ConsoleApp1.DataAccess;
-using ConsoleApp1.Entities;
-using ConsoleApp1.Entities.Enums;
+﻿using ConsoleApp1.Core.Entities;
+using ConsoleApp1.Core.Entities.Enums;
+using ConsoleApp1.Core.Interfaces.DataAccess;
+using ConsoleApp1.Helpers;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 
@@ -9,16 +10,11 @@ namespace ConsoleApp1.Infrastructure.DataAccess
     internal class FileToDoRepository : IToDoRepository
     {
         private readonly string _storagePath;
-        private Dictionary<string, string> _indexes = new Dictionary<string, string>();
         public FileToDoRepository(string storagePath)
         {
             _storagePath = storagePath;
             if (!Directory.Exists(storagePath))
                 Directory.CreateDirectory(storagePath);
-            if (!File.Exists(Path.Combine(storagePath, "indexes.json")))
-                File.Create(Path.Combine(storagePath, "indexes.json")).Close();
-
-            UpdateIndexes(IndexOperation.UpdateAll);
         }
         public async Task AddAsync(ToDoItem item, CancellationToken ct)
         {
@@ -28,18 +24,16 @@ namespace ConsoleApp1.Infrastructure.DataAccess
             {
                 await JsonSerializer.SerializeAsync(stream, item, cancellationToken: ct);
             }
-            _indexes.Add(item.id.ToString(),item.User.UserId.ToString());
-            UpdateIndexes(IndexOperation.Update);
+            await FileLinkIndex.AddTaskIndex(item.id.ToString(), item.User.UserId.ToString());
         }
 
         public async Task DeleteAsync(Guid id, CancellationToken ct)
         {
-            if (!_indexes.ContainsKey(id.ToString()))
+            if (!(await FileLinkIndex.GetTaskIndexes()).ContainsKey(id.ToString()))
                 throw new ArgumentException("Такой задачи нет.");
-            string path = Path.Combine(_storagePath, _indexes[id.ToString()], $"{id.ToString()}.json");
+            string path = Path.Combine(_storagePath, (await FileLinkIndex.GetTaskIndexes())[id.ToString()], $"{id.ToString()}.json");
             File.Delete(path);
-            _indexes.Remove(id.ToString());
-            UpdateIndexes(IndexOperation.Update);
+            await FileLinkIndex.RemoveTaskIndex(id.ToString());
         }
 
         public async Task<int> CountActiveAsync(Guid userId, CancellationToken ct)
@@ -69,10 +63,10 @@ namespace ConsoleApp1.Infrastructure.DataAccess
 
         public async Task<ToDoItem?> GetAsync(Guid id, CancellationToken ct)
         {
-            if (!_indexes.ContainsKey(id.ToString()))
+            if (!(await FileLinkIndex.GetTaskIndexes()).ContainsKey(id.ToString()))
                 throw new ArgumentException("Такой задачи нет");
             ToDoItem item;
-            using (FileStream stream = File.OpenRead(Path.Combine(_storagePath, _indexes[id.ToString()], $"{id.ToString()}.json")))
+            using (FileStream stream = File.OpenRead(Path.Combine(_storagePath, (await FileLinkIndex.GetTaskIndexes())[id.ToString()], $"{id.ToString()}.json")))
             {
                 item = await JsonSerializer.DeserializeAsync<ToDoItem>(stream, cancellationToken: ct);
             }
@@ -81,7 +75,7 @@ namespace ConsoleApp1.Infrastructure.DataAccess
 
         public async Task UpdateAsync(ToDoItem item, CancellationToken ct)
         {
-            if(!_indexes.ContainsKey(item.id.ToString()))
+            if(!(await FileLinkIndex.GetTaskIndexes()).ContainsKey(item.id.ToString()))
                 throw new ArgumentException("Такой задачи нет");
             string pathToTask = Path.Combine(_storagePath, item.User.UserId.ToString(), $"{item.id.ToString()}.json");
             ToDoItem itemChanging = null;
@@ -109,35 +103,5 @@ namespace ConsoleApp1.Infrastructure.DataAccess
             }
             return result;
         }
-
-        private void UpdateIndexes(IndexOperation operation)
-        {
-            string json = string.Empty;
-            switch (operation)
-            {
-                case IndexOperation.Update:
-                    json = JsonSerializer.Serialize(_indexes);
-                    File.WriteAllText(Path.Combine(_storagePath, "indexes.json"), json);
-                    break;
-                case IndexOperation.UpdateAll:
-                    _indexes.Clear();
-                    string[] users = Directory.GetFiles(_storagePath, "*.json", SearchOption.TopDirectoryOnly).Where(name => name.LastIndexOf("indexes.json") == -1).ToArray();
-                    for (int i = 0; i < users.Length; i++)
-                    {//ищем задачи по папка пользователей. Учитываем, что адрес без ".json" т.е. нужны папки.
-                        string pathToTaskUser = users[i].Remove(users[i].LastIndexOf(".json"));
-                        string[] tasks = Directory.GetFiles(pathToTaskUser);
-                        for (int j = 0; j < tasks.Length; j++)
-                        {
-                            string taskId = Path.GetFileNameWithoutExtension(tasks[j]);
-                            string userId = Path.GetFileNameWithoutExtension(users[i]);
-                            _indexes.Add(taskId, userId);
-                        }
-                    }
-                    json = JsonSerializer.Serialize(_indexes);
-                    File.WriteAllText(Path.Combine(_storagePath, "indexes.json"), json);
-                    break;
-            }
-        }
-
     }
 }

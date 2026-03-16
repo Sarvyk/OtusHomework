@@ -1,5 +1,5 @@
-﻿using ConsoleApp1.DataAccess;
-using ConsoleApp1.Entities;
+﻿using ConsoleApp1.Core.Entities;
+using ConsoleApp1.Core.Interfaces.DataAccess;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -19,13 +19,13 @@ namespace ConsoleApp1.Infrastructure.DataAccess
         }
         public async Task AddAsync(ToDoUser user, CancellationToken ct)
         {
-            using (FileStream stream = File.Create(Path.Combine(_storagePath, $"{user.UserId}.json")))
-            {
-                await JsonSerializer.SerializeAsync(stream, user, cancellationToken:ct);
-            }
             if(!Directory.Exists(Path.Combine(_storagePath, user.UserId.ToString())))
             {
                 Directory.CreateDirectory(Path.Combine(_storagePath, user.UserId.ToString()));
+            }
+            using (FileStream stream = File.Create(Path.Combine(_storagePath, $"{user.UserId}.json")))
+            {
+                await JsonSerializer.SerializeAsync(stream, user, cancellationToken:ct);
             }
         }
 
@@ -45,7 +45,7 @@ namespace ConsoleApp1.Infrastructure.DataAccess
 
         public async Task<ToDoUser?> GetUserByTelegramUserIdAsync(long telegramUserId, CancellationToken ct)
         {
-            string[] users = Directory.GetFiles(_storagePath, "*.json").Where(name => name.LastIndexOf("indexes.json") == -1).ToArray();
+            string[] users = Directory.GetFiles(_storagePath, "*.json").Where(name => name.LastIndexOf("Indexes.json") == -1).ToArray();
             ToDoUser? user = null;
             for (int i = 0; i<users.Length; i++)
             {

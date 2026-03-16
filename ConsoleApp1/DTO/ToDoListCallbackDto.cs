@@ -1,0 +1,22 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+using System.Text;
+
+namespace ConsoleApp1.DTO
+{
+    internal class ToDoListCallbackDto : CallbackDto
+    {
+        public Guid? ToDoListId {  get; set; }
+        public static new ToDoListCallbackDto FromString(string input)
+        {//На вход принимает строку ввида "{action}|{toDoListId}|{prop2}...". Нужно создать ToDoListCallbackDto с Action = action и ToDoListId = toDoListId.
+            string[] values = input.Split('|');
+            ToDoListCallbackDto dto = new ToDoListCallbackDto();
+            dto.Action = values[0];
+            dto.ToDoListId = Guid.Parse(values[1]);
+            return dto;
+        }
+        public override string ToString() => $"{base.ToString()}|{ToDoListId.ToString()}";
+//- переопределить метод.Он должен возвращать $"{base.ToString()}|{ToDoListId}"
+    }
+}
