@@ -4,9 +4,6 @@ using ConsoleApp1.Core.Scenarios.Enums;
 using ConsoleApp1.Core.Scenarios.Interfaces;
 using ConsoleApp1.DTO;
 using ConsoleApp1.Helpers;
-using System;
-using System.Collections.Generic;
-using System.Text;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.ReplyMarkups;
@@ -24,18 +21,15 @@ namespace ConsoleApp1.Core.Scenarios
             _toDoListService = toDoListService;
             _toDoService = toDoService;
         }
-        public bool CanHandle(ScenarioType scenario)
-        {
-            return scenario == ScenarioType.DeleteList;
-        }
+        public bool CanHandle(ScenarioType scenario) => scenario == ScenarioType.DeleteList;
 
         public async Task<ScenarioResult> HandleMessageAsync(ITelegramBotClient botClient, ScenarioContext context, Message message, CancellationToken ct)
         {
             switch (context.CurrentStep)
             {
                 case null:
-                    ToDoUser user = await _userService.GetUserByTelegramUserIdAsync(message.From.Id, ct);
-                    context.Data.Add("User", user);
+                    //ToDoUser user = await _userService.GetUserByTelegramUserIdAsync(message.From.Id, ct);
+                    //context.Data.Add("User", user);
                     IReadOnlyList<ToDoList> userLists = await _toDoListService.GetUserLists((await _userService.GetUserByTelegramUserIdAsync(message.From.Id, ct)).UserId, ct);
                     if (userLists.Count == 0)
                     {

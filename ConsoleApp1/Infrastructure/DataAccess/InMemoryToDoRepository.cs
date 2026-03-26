@@ -50,6 +50,11 @@ namespace ConsoleApp1.Infrastructure.DataAccess
             return _items.Where(x => x.User.UserId == userId && x.State == ToDoItemState.Active).ToList();
         }
 
+        public async Task<IReadOnlyList<ToDoItem>> GetCompletedByUserIdAsync(Guid userId, CancellationToken ct)
+        {
+            return _items.Where(x => x.User.UserId == userId && x.State == ToDoItemState.Completed).ToList();
+        }
+
         public async Task<IReadOnlyList<ToDoItem>> GetAllByUserIdAsync(Guid userId, CancellationToken ct)
         {
             return _items.Where(x => x.User.UserId == userId).ToList();
@@ -63,5 +68,6 @@ namespace ConsoleApp1.Infrastructure.DataAccess
             else 
                 throw new ArgumentException("Такой задачи нет, либо список пуст");
         }
+
     }
 }

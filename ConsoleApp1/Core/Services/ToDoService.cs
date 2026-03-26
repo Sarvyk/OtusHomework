@@ -46,6 +46,11 @@ namespace ConsoleApp1.Core.Services
             return await _repository.GetActiveByUserIdAsync(userid,ct);
         }
 
+        public async Task<IReadOnlyList<ToDoItem>> GetCompletedByUserIdAsync(Guid userId, CancellationToken ct)
+        {
+            return await _repository.GetCompletedByUserIdAsync(userId,ct);
+        }
+
         public async Task<IReadOnlyList<ToDoItem>> GetAllByUserIdAsync(Guid userid,CancellationToken ct)
         {
             return await _repository.GetAllByUserIdAsync(userid, ct);
@@ -133,6 +138,11 @@ namespace ConsoleApp1.Core.Services
                     taskList.Add(task);
             }
             return taskList;
+        }
+
+        public async Task<ToDoItem?> Get(Guid toDoItemId, CancellationToken ct)
+        {
+            return await _repository.GetAsync(toDoItemId, ct);
         }
     }
 }

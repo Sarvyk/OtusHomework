@@ -33,7 +33,8 @@ namespace ConsoleApp1
             {
                 new AddTaskScenario(userSerivce, toDoListService, toDoService),
                 new AddListScenario(userSerivce, toDoListService),
-                new DeleteListScenario(userSerivce, toDoListService, toDoService)
+                new DeleteListScenario(userSerivce, toDoListService, toDoService),
+                new DeleteTaskScenario(toDoService)
             };
             var handler = new UpdateHandler(userSerivce, toDoService, new ToDoListService(new FileToDoListRepository(storagePath)), scenarios, new InMemoryScenarioContextRepository());
             var cts = new CancellationTokenSource();
@@ -71,10 +72,9 @@ namespace ConsoleApp1
             await botClient.SetMyCommands(new List<BotCommand>()
             {
                 new BotCommand("help","вызов помощи"),
+                new BotCommand("info","информация по приложению"),
                 new BotCommand("addtask","`/addtask название`Добавить задачу."),
                 new BotCommand("show","показывает список листов задач"),
-                new BotCommand("removetask","`/removetask id` удаляет задачу по id."),
-                new BotCommand("completetask","`/completetask id` завершает задачу по id."),
                 new BotCommand("report","статистика по задачам"),
                 new BotCommand("find","`/find назв` выводит список задач, начиная с введённых символов.")
             });
