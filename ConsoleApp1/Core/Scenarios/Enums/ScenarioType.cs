@@ -9,6 +9,7 @@ namespace ConsoleApp1.Core.Scenarios.Enums
         None,
         AddTask,
         AddList,
-        DeleteList
+        DeleteList,
+        DeleteTask
     }
 }

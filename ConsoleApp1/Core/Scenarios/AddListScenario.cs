@@ -20,10 +20,7 @@ namespace ConsoleApp1.Core.Scenarios
             _userService = userService;
             _toDoListService = toDoListService;
         }
-        public bool CanHandle(ScenarioType scenario)
-        {
-            return scenario == ScenarioType.AddList;
-        }
+        public bool CanHandle(ScenarioType scenario) => scenario == ScenarioType.AddList;
 
         public async Task<ScenarioResult> HandleMessageAsync(ITelegramBotClient botClient, ScenarioContext context, Message message, CancellationToken ct)
         {

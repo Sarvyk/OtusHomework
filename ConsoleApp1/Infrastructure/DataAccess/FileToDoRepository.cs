@@ -56,6 +56,11 @@ namespace ConsoleApp1.Infrastructure.DataAccess
             return (await GetTasks(userId, ct)).Where(x => x.User.UserId == userId && x.State == ToDoItemState.Active).ToList();
         }
 
+        public async Task<IReadOnlyList<ToDoItem>> GetCompletedByUserIdAsync(Guid userId, CancellationToken ct)
+        {
+            return (await GetTasks(userId, ct)).Where(x => x.User.UserId == userId && x.State == ToDoItemState.Completed).ToList();
+        }
+
         public async Task<IReadOnlyList<ToDoItem>> GetAllByUserIdAsync(Guid userId, CancellationToken ct)
         {
             return (await GetTasks(userId, ct)).Where(x => x.User.UserId == userId).ToList();
