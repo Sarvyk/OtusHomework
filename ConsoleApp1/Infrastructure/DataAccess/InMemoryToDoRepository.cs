@@ -1,9 +1,6 @@
 ﻿using ConsoleApp1.Core.Entities;
 using ConsoleApp1.Core.Entities.Enums;
 using ConsoleApp1.Core.Interfaces.DataAccess;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace ConsoleApp1.Infrastructure.DataAccess
 {
@@ -17,12 +14,12 @@ namespace ConsoleApp1.Infrastructure.DataAccess
 
         public async Task<int> CountActiveAsync(Guid userId, CancellationToken ct)
         {
-            return _items.Count(x => x.State == ToDoItemState.Active);
+            return _items.Count(x => x.State == ToDoItemState.Active && x.UserId == userId);
         }
 
         public async Task DeleteAsync(Guid id, CancellationToken ct)
         {
-            ToDoItem? item = _items.FirstOrDefault(x => x.id == id);
+            ToDoItem? item = _items.FirstOrDefault(x => x.Id == id);
             if(item != null)
                 _items.Remove(item);
             else
@@ -31,41 +28,41 @@ namespace ConsoleApp1.Infrastructure.DataAccess
 
         public async Task<bool> ExistsByNameAsync(Guid userId, string name, CancellationToken ct)
         {
-            return _items.Any(x => x.User.UserId == userId && x.Name == name);
+            return _items.Any(x => x.UserId == userId && x.Name == name);
         }
 
         public async Task<IReadOnlyList<ToDoItem>> FindAsync(Guid userId, Func<ToDoItem, bool> predicate, CancellationToken ct)
         {
-            var items = _items.Where(x => x.User.UserId == userId).ToList();
+            var items = _items.Where(x => x.UserId == userId).ToList();
             return items.Where(predicate).ToList();
         }
 
         public async Task<ToDoItem?> GetAsync(Guid id, CancellationToken ct)
         {
-            return _items.FirstOrDefault(x => x.id == id);
+            return _items.FirstOrDefault(x => x.Id == id);
         }
 
         public async Task<IReadOnlyList<ToDoItem>> GetActiveByUserIdAsync(Guid userId, CancellationToken ct)
         {
-            return _items.Where(x => x.User.UserId == userId && x.State == ToDoItemState.Active).ToList();
+            return _items.Where(x => x.UserId == userId && x.State == ToDoItemState.Active).ToList();
         }
 
         public async Task<IReadOnlyList<ToDoItem>> GetCompletedByUserIdAsync(Guid userId, CancellationToken ct)
         {
-            return _items.Where(x => x.User.UserId == userId && x.State == ToDoItemState.Completed).ToList();
+            return _items.Where(x => x.UserId == userId && x.State == ToDoItemState.Completed).ToList();
         }
 
         public async Task<IReadOnlyList<ToDoItem>> GetAllByUserIdAsync(Guid userId, CancellationToken ct)
         {
-            return _items.Where(x => x.User.UserId == userId).ToList();
+            return _items.Where(x => x.UserId == userId).ToList();
         }
 
         public async Task UpdateAsync(ToDoItem item, CancellationToken ct)
         {
-            ToDoItem? task = _items.Find(x => x == item);
+            ToDoItem? task = _items.Find(x => x.Id == item.Id);
             if (task != null)
                 task.State = ToDoItemState.Completed;
-            else 
+            else
                 throw new ArgumentException("Такой задачи нет, либо список пуст");
         }
 

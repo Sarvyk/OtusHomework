@@ -17,7 +17,14 @@ namespace ConsoleApp1.Core.Services
                 throw new ArgumentException("Слишком длинное название. Допускается название максимум из 10 символов!");
             if (await _repository.ExistsByName(user.UserId, name,ct))
                 throw new DublicateListException(name);
-            ToDoList toDoList = new ToDoList(user, name);
+            ToDoList toDoList = new ToDoList()
+            {
+                Id = Guid.NewGuid(),
+                Name = name,
+                User = user,
+                CreatedAt = DateTime.UtcNow,
+                UserDatabaseId = user.DatabaseId
+            };
             await _repository.Add(toDoList, ct);
             return toDoList;
         }

@@ -46,7 +46,7 @@ namespace ConsoleApp1.Classes
                 switch (update.Type)
                 {
                     case UpdateType.CallbackQuery:
-                        if(await IsRegistered(botClient, update.CallbackQuery.Message, ct))
+                        if(await IsRegistered(botClient, update, ct))
                             await HandleCallBack(botClient, update, ct);
                         break;
                     case UpdateType.Message:
@@ -120,21 +120,22 @@ namespace ConsoleApp1.Classes
                     await InfoCommand(botClient, update, ct);
                     break;
                 case "/addtask":
-                    if (await IsRegistered(botClient, update.Message, ct))
+                    if (await IsRegistered(botClient, update, ct))
                     {
                         context = new ScenarioContext(ScenarioType.AddTask);
+                        context.Data.Add("TelegramUserId", update.Message.From.Id);
                         await _scenarioContextRepository.SetContext(update.Message.From.Id, context, ct);
                         await ProcessScenario(botClient, context, update.Message.From, update.Message, ct);
                     }
                     break;
                 case "/show":
-                    if (await IsRegistered(botClient, update.Message, ct))
+                    if (await IsRegistered(botClient, update, ct))
                     {
                         await ShowCommand(botClient, update, true, ct);
                     }
                     break;
                 case "/report":
-                    if (await IsRegistered(botClient, update.Message, ct))
+                    if (await IsRegistered(botClient, update, ct))
                     {
                         IToDoReportService report = new ToDoReportService(_toDoService);
                         var stat = (await report.GetUserStatsAsync((await _userService.GetUserByTelegramUserIdAsync(update.Message.From.Id, ct)).UserId, ct));
@@ -142,7 +143,7 @@ namespace ConsoleApp1.Classes
                     }
                     break;
                 case string a when a.IndexOf("/find") == 0:
-                    if (await IsRegistered(botClient, update.Message, ct))
+                    if (await IsRegistered(botClient, update, ct))
                     {
                         await botClient.SendMessage(update.Message.Chat, await FindTasks(update, a.Replace("/find", "").Trim(), ct), cancellationToken: ct);
                     }
@@ -166,11 +167,13 @@ namespace ConsoleApp1.Classes
                 case CallbackQuery a when a.Data == "addlist":
                     context = new ScenarioContext(ScenarioType.AddList);
                     await _scenarioContextRepository.SetContext(update.CallbackQuery.From.Id, context, ct);
+                    context.Data.Add("TelegramUserId", update.CallbackQuery.From.Id);
                     await ProcessScenario(botClient, context, update.CallbackQuery.From, update.CallbackQuery.Message, ct);
                     break;
                 case CallbackQuery a when a.Data == "deletelist":
                     context = new ScenarioContext(ScenarioType.DeleteList);
                     await _scenarioContextRepository.SetContext(update.CallbackQuery.From.Id, context, ct);
+                    context.Data.Add("TelegramUserId", update.CallbackQuery.From.Id);
                     await ProcessScenario(botClient, context, update.CallbackQuery.From, update.CallbackQuery.Message, ct);
                     break;
                 case CallbackQuery a when a.Data.StartsWith("show"):
@@ -196,7 +199,7 @@ namespace ConsoleApp1.Classes
                     }
                     PagedListCallbackDto listDTO = PagedListCallbackDto.FromString(a.Data);
                     IReadOnlyList<ToDoItem> tasks = null;
-                    Guid userId = (await _userService.GetUserByTelegramUserIdAsync(update.CallbackQuery.Message.From.Id, ct)).UserId;
+                    Guid userId = (await _userService.GetUserByTelegramUserIdAsync(update.CallbackQuery.From.Id, ct)).UserId;
                     if (listDTO.Action == "show" && listDTO.ToDoListId != null)//получаем список активных задач с привязкой к списку.
                         tasks = (await _toDoService.GetByUserIdAndList(userId, listDTO.ToDoListId, ct)).Where(task => task.State == ToDoItemState.Active).ToList();
                     else if(listDTO.Action == "show")//список активных задач без привязки к списку.
@@ -208,7 +211,7 @@ namespace ConsoleApp1.Classes
                     List<KeyValuePair<string, string>> callbackData = new List<KeyValuePair<string, string>>();
                     foreach (ToDoItem task in tasks)
                     {
-                        callbackData.Add(new KeyValuePair<string, string>(task.Name, ToDoItemCallbackDto.FromString($"showtask|{task.id}").ToString()));
+                        callbackData.Add(new KeyValuePair<string, string>(task.Name, ToDoItemCallbackDto.FromString($"showtask|{task.Id}").ToString()));
                     }
 
                     if (tasks.Count == 0)
@@ -225,9 +228,9 @@ namespace ConsoleApp1.Classes
                 case CallbackQuery a when a.Data.StartsWith("deletetask"):
                     context = new ScenarioContext(ScenarioType.DeleteTask);
                     context.Data.Add("Callback", ToDoItemCallbackDto.FromString(a.Data).ToString());
+                    context.Data.Add("TelegramUserId", update.CallbackQuery.From.Id);
                     await _scenarioContextRepository.SetContext(update.CallbackQuery.From.Id, context, ct);
                     await ProcessScenario(botClient, context, update.CallbackQuery.From, update.CallbackQuery.Message, ct);
-                    ToDoItemCallbackDto tdo2 = ToDoItemCallbackDto.FromString(a.Data);
                     break;
             }
         }
@@ -333,7 +336,7 @@ namespace ConsoleApp1.Classes
             int i = 1;
             foreach (ToDoItem Task in tasks)
             {
-                result += $"{i++})ID:{Task.id}, Название:{Task.Name}, Дата создания:{Task.CreatedAt}\r\n";
+                result += $"{i++})ID:{Task.Id}, Название:{Task.Name}, Дата создания:{Task.CreatedAt}\r\n";
             }
             if(result == string.Empty)
                 result = "Задач в списке нет.";
@@ -359,11 +362,11 @@ namespace ConsoleApp1.Classes
                 await botClient.SendMessage(update.Message.Chat, $"{User.TelegramUserName}, добро пожаловать!", replyMarkup: keyboard, cancellationToken: ct);
             }
         }
-        private async Task<bool> IsRegistered(ITelegramBotClient bot,Message message,CancellationToken ct)
+        private async Task<bool> IsRegistered(ITelegramBotClient bot, Update update,CancellationToken ct)
         {
-            if (await _userService.GetUserByTelegramUserIdAsync(message.From.Id,ct) == null)
+            if (await _userService.GetUserByTelegramUserIdAsync((update.Message != null? update.Message.From.Id : update.CallbackQuery.From.Id),ct) == null)
             {
-                await bot.SendMessage(message.Chat, "Команда доступна только для зарегистрированных пользователей. /start Для запуска.", cancellationToken: ct);
+                await bot.SendMessage((update.Message != null ? update.Message.Chat : update.CallbackQuery.Message.Chat), "Команда доступна только для зарегистрированных пользователей. /start Для запуска.", cancellationToken: ct);
                 return false; 
             }
             else

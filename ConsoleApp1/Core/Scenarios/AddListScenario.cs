@@ -27,7 +27,7 @@ namespace ConsoleApp1.Core.Scenarios
             switch(context.CurrentStep)
             {
                 case null:
-                    ToDoUser user = await _userService.GetUserByTelegramUserIdAsync(message.From.Id, ct);
+                    ToDoUser user = await _userService.GetUserByTelegramUserIdAsync(long.Parse(context.Data["TelegramUserId"].ToString()), ct);
                     context.Data.Add("User", user);
                     await botClient.SendMessage(message.Chat, "Введите название списка:", replyMarkup: MarkupManager.SetKeyboardCancel(), cancellationToken: ct);
                     context.CurrentStep = "Name";

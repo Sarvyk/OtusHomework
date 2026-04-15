@@ -30,7 +30,7 @@ namespace ConsoleApp1.Core.Scenarios
                 case null:
                     //ToDoUser user = await _userService.GetUserByTelegramUserIdAsync(message.From.Id, ct);
                     //context.Data.Add("User", user);
-                    IReadOnlyList<ToDoList> userLists = await _toDoListService.GetUserLists((await _userService.GetUserByTelegramUserIdAsync(message.From.Id, ct)).UserId, ct);
+                    IReadOnlyList<ToDoList> userLists = await _toDoListService.GetUserLists((await _userService.GetUserByTelegramUserIdAsync(long.Parse(context.Data["TelegramUserId"].ToString()), ct)).UserId, ct);
                     if (userLists.Count == 0)
                     {
                         throw new ArgumentException("Не обнаружены списки");
@@ -65,15 +65,15 @@ namespace ConsoleApp1.Core.Scenarios
                         await botClient.SendMessage(message.Chat, "Удаление отменено.", replyMarkup: MarkupManager.SetStandartKeyboardButtonList(), cancellationToken: ct);
                         return ScenarioResult.Completed;
                     }
-                    Guid userId = (await _userService.GetUserByTelegramUserIdAsync(message.From.Id, ct)).UserId;
+                    Guid userId = (await _userService.GetUserByTelegramUserIdAsync(long.Parse(context.Data["TelegramUserId"].ToString()), ct)).UserId;
                     Guid listId = ((ToDoList)(context.Data["SelectedList"])).Id;
-                    await _toDoListService.Delete(listId, ct);
-                    await FileLinkIndex.RemoveTaskListIndex(listId.ToString());
                     foreach(ToDoItem toDoItem in await _toDoService.GetByUserIdAndList(userId, listId, ct))
                     {
-                        await _toDoService.DeleteAsync(toDoItem.id,ct);
-                        await FileLinkIndex.RemoveTaskIndex(toDoItem.id.ToString());
+                        await _toDoService.DeleteAsync(toDoItem.Id,ct);
+                        await FileLinkIndex.RemoveTaskIndex(toDoItem.Id.ToString());
                     }
+                    await _toDoListService.Delete(listId, ct);
+                    await FileLinkIndex.RemoveTaskListIndex(listId.ToString());
                     break;
             }
             await botClient.SendMessage(message.Chat, "Лист удалён.", replyMarkup: MarkupManager.SetStandartKeyboardButtonList(), cancellationToken: ct);

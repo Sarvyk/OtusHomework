@@ -19,7 +19,19 @@ namespace ConsoleApp1.Core.Services
         public async Task<ToDoItem> AddAsync(ToDoUser user, string name, DateTime deadLine, ToDoList? toDoList, CancellationToken ct)
         {
             ValidateString(name);
-            ToDoItem task = new ToDoItem(user, name, deadLine, toDoList);
+            ToDoItem task = new ToDoItem()
+            {
+                Id = Guid.NewGuid(),
+                User = user,
+                Name = name,
+                CreatedAt = DateTime.UtcNow,
+                State = Entities.Enums.ToDoItemState.Active,
+                DeadLine = deadLine,
+                ToDoList = toDoList,
+                ToDoListDatabaseId = toDoList.DatabaseId,
+                UserDatabaseId = user.DatabaseId,
+                UserId = user.UserId
+            };
             if(task.Name.Length > _maxTaskLength)
             {
                 throw new TaskLenghtLimitException(task.Name.Length, (int)_maxTaskLength);
