@@ -1,4 +1,5 @@
-﻿using ConsoleApp1.Classes;
+﻿using ConsoleApp1.BackgroundTasks;
+using ConsoleApp1.Classes;
 using ConsoleApp1.Core.Scenarios;
 using ConsoleApp1.Core.Scenarios.Interfaces;
 using ConsoleApp1.Core.Services;
@@ -23,7 +24,6 @@ namespace ConsoleApp1
         static async Task Main(string[] args)
         {
             FileLinkIndex.Initialize(storagePath);
-            var botClient = new TelegramBotClient(_token);
             var userRepository = new SqlUserRepository(new DataContextFactory(connectionString));
             var serviceRepository = new SqlToDoRepository(new DataContextFactory(connectionString));
             var listRepository =new SqlToDoListRepository(new DataContextFactory(connectionString));
@@ -37,24 +37,30 @@ namespace ConsoleApp1
                 new DeleteListScenario(userSerivce, toDoListService, toDoService),
                 new DeleteTaskScenario(toDoService)
             };
-            var handler = new UpdateHandler(userSerivce, toDoService, toDoListService, scenarios, new InMemoryScenarioContextRepository());
+            var botClient = new TelegramBotClient(_token);
+            var scenarioRepository = new InMemoryScenarioContextRepository();
             var cts = new CancellationTokenSource();
+            var backgroundRunner = new BackgroundTaskRunner();
+            backgroundRunner.AddTask(new ResetScenarioBackgroundTask(TimeSpan.FromHours(1), scenarioRepository, botClient));
+            backgroundRunner.StartTasks(cts.Token);
+            var handler = new UpdateHandler(userSerivce, toDoService, toDoListService, scenarios, scenarioRepository);
             //botClient.DeleteWebhook(true);
             botClient.StartReceiving(handler, cancellationToken: cts.Token);
             await SetCommantList(botClient);
             var myBot = await botClient.GetMe();
             Console.WriteLine($"-------------Бот \"{myBot.FirstName}\" работает.-------------");
-            await KeyCheck(myBot, cts);
+            await KeyCheck(myBot, backgroundRunner, cts);
             await Task.Delay(-1);
         }
 
-        private static async Task KeyCheck(User bot, CancellationTokenSource cts)
+        private static async Task KeyCheck(User bot, BackgroundTaskRunner backgroundRunner, CancellationTokenSource cts)
         {
             while (true)
             {
                 var key = Console.ReadKey(true);
                 if (key.Key == ConsoleKey.A)
                 {
+                    await backgroundRunner.StopTasks(cts.Token);
                     Console.WriteLine("Асинхронные операции отменены.");
                     cts.Cancel();
                     break;
