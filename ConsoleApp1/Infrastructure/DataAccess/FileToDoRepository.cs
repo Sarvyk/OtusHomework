@@ -18,13 +18,13 @@ namespace ConsoleApp1.Infrastructure.DataAccess
         }
         public async Task AddAsync(ToDoItem item, CancellationToken ct)
         {
-            string pathToUser = Path.Combine(_storagePath, $"{item.User.UserId}.json");
-            string pathToTask = Path.Combine(_storagePath, $"{item.User.UserId}", $"{item.id}.json");
+            string pathToUser = Path.Combine(_storagePath, $"{item.UserId}.json");
+            string pathToTask = Path.Combine(_storagePath, $"{item.UserId}", $"{item.Id}.json");
             using (FileStream stream = File.Create(pathToTask))
             {
                 await JsonSerializer.SerializeAsync(stream, item, cancellationToken: ct);
             }
-            await FileLinkIndex.AddTaskIndex(item.id.ToString(), item.User.UserId.ToString());
+            await FileLinkIndex.AddTaskIndex(item.Id.ToString(), item.UserId.ToString());
         }
 
         public async Task DeleteAsync(Guid id, CancellationToken ct)
@@ -43,27 +43,27 @@ namespace ConsoleApp1.Infrastructure.DataAccess
 
         public async Task<bool> ExistsByNameAsync(Guid userId, string name, CancellationToken ct)
         {
-            return (await GetTasks(userId, ct)).Any(x => x.User.UserId == userId && x.Name == name);
+            return (await GetTasks(userId, ct)).Any(x => x.UserId == userId && x.Name == name);
         }
         public async Task<IReadOnlyList<ToDoItem>> FindAsync(Guid userId, Func<ToDoItem, bool> predicate, CancellationToken ct)
         {
-            var items = (await GetTasks(userId, ct)).Where(x => x.User.UserId == userId).ToList();
+            var items = (await GetTasks(userId, ct)).Where(x => x.UserId == userId).ToList();
             return items.Where(x => predicate(x)).ToList();
         }
 
         public async Task<IReadOnlyList<ToDoItem>> GetActiveByUserIdAsync(Guid userId, CancellationToken ct)
         {
-            return (await GetTasks(userId, ct)).Where(x => x.User.UserId == userId && x.State == ToDoItemState.Active).ToList();
+            return (await GetTasks(userId, ct)).Where(x => x.UserId == userId && x.State == ToDoItemState.Active).ToList();
         }
 
         public async Task<IReadOnlyList<ToDoItem>> GetCompletedByUserIdAsync(Guid userId, CancellationToken ct)
         {
-            return (await GetTasks(userId, ct)).Where(x => x.User.UserId == userId && x.State == ToDoItemState.Completed).ToList();
+            return (await GetTasks(userId, ct)).Where(x => x.UserId == userId && x.State == ToDoItemState.Completed).ToList();
         }
 
         public async Task<IReadOnlyList<ToDoItem>> GetAllByUserIdAsync(Guid userId, CancellationToken ct)
         {
-            return (await GetTasks(userId, ct)).Where(x => x.User.UserId == userId).ToList();
+            return (await GetTasks(userId, ct)).Where(x => x.UserId == userId).ToList();
         }
 
         public async Task<ToDoItem?> GetAsync(Guid id, CancellationToken ct)
@@ -80,9 +80,9 @@ namespace ConsoleApp1.Infrastructure.DataAccess
 
         public async Task UpdateAsync(ToDoItem item, CancellationToken ct)
         {
-            if(!(await FileLinkIndex.GetTaskIndexes()).ContainsKey(item.id.ToString()))
+            if(!(await FileLinkIndex.GetTaskIndexes()).ContainsKey(item.Id.ToString()))
                 throw new ArgumentException("Такой задачи нет");
-            string pathToTask = Path.Combine(_storagePath, item.User.UserId.ToString(), $"{item.id.ToString()}.json");
+            string pathToTask = Path.Combine(_storagePath, item.UserId.ToString(), $"{item.Id.ToString()}.json");
             ToDoItem itemChanging = null;
             using(FileStream stream = new FileStream(pathToTask, FileMode.Open, FileAccess.Read))
             {

@@ -1,13 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.Design;
-using System.Text;
+﻿using System.ComponentModel;
 
 namespace ConsoleApp1.Core.Entities.Enums
 {
-    enum ToDoItemState
+    internal enum ToDoItemState
     {
-        Active,
-        Completed
+        [Description("Active")]
+        Active = 0,
+        [Description("Completed")]
+        Completed = 1
     }
 }
