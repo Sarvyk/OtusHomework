@@ -14,6 +14,11 @@ namespace ConsoleApp1.Infrastructure.DataAccess
             _users.Add(user);
         }
 
+        public Task<IReadOnlyList<ToDoUser>> GetAllUsers(CancellationToken ct)
+        {
+            throw new NotImplementedException();
+        }
+
         public async Task<ToDoUser?> GetUserAsync(Guid userId, CancellationToken ct)
         {
             return _users.FirstOrDefault(x => x.UserId == userId);
