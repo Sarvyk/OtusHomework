@@ -143,5 +143,16 @@ namespace ConsoleApp1.Infrastructure.DataAccess
             return await dbContext.ToDoItems
                 .CountAsync(i => i.UserId == userModel.Id && i.ItemState == (int)ToDoItemState.Active, ct);
         }
+
+        public async Task<IReadOnlyList<ToDoItem>> GetActiveWithDeadline(Guid userId, DateTime from, DateTime to, CancellationToken ct)
+        {
+            using var dbContext = _factory.CreateDataContext();
+            var user = await dbContext.ToDoUsers.FirstOrDefaultAsync(u => u.ExternalId == userId);
+            var models = await AsyncExtensions.ToListAsync(dbContext.ToDoItems
+                .Where(t => t.UserId == user.Id && t.ItemState == (int)ToDoItemState.Active && (t.DeadLine >= from && t.DeadLine <to))
+                .LoadWith(t => t.User)
+                .LoadWith(t => t.List));
+            return models.Select(ModelMapper.MapFromModel).ToList();
+        }
     }
 }

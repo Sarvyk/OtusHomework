@@ -21,6 +21,13 @@ namespace ConsoleApp1.Infrastructure.DataAccess
             await dbContext.InsertAsync(model, token: ct);
         }
 
+        public async Task<IReadOnlyList<ToDoUser>> GetAllUsers(CancellationToken ct)
+        {
+            using var dbContext = _factory.CreateDataContext();
+            var models = await dbContext.ToDoUsers.ToListAsync();
+            return models.Select(ModelMapper.MapFromModel).ToList();
+        }
+
         public async Task<ToDoUser?> GetUserAsync(Guid userId, CancellationToken ct)
         {
             using var dbContext = _factory.CreateDataContext();

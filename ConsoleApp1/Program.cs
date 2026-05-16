@@ -4,6 +4,7 @@ using ConsoleApp1.Core.Scenarios;
 using ConsoleApp1.Core.Scenarios.Interfaces;
 using ConsoleApp1.Core.Services;
 using ConsoleApp1.Helpers;
+using ConsoleApp1.Infrastructure;
 using ConsoleApp1.Infrastructure.DataAccess;
 using DotNetEnv;
 using Telegram.Bot;
@@ -30,6 +31,7 @@ namespace ConsoleApp1
             var userSerivce = new UserService(userRepository);
             var toDoService = new ToDoService(serviceRepository);
             var toDoListService = new ToDoListService(listRepository);
+            var notificationServices = new NotificationService(new DataContextFactory(connectionString));
             var scenarios = new List<IScenario>()
             {
                 new AddTaskScenario(userSerivce, toDoListService, toDoService),
@@ -42,6 +44,9 @@ namespace ConsoleApp1
             var cts = new CancellationTokenSource();
             var backgroundRunner = new BackgroundTaskRunner();
             backgroundRunner.AddTask(new ResetScenarioBackgroundTask(TimeSpan.FromHours(1), scenarioRepository, botClient));
+            backgroundRunner.AddTask(new NotificationBackgroundTask(TimeSpan.FromMinutes(1), notificationServices, botClient));
+            backgroundRunner.AddTask(new DeadlineBackgroundTask(TimeSpan.FromHours(1), notificationServices, userRepository,serviceRepository));
+            backgroundRunner.AddTask(new TodayBackgroundTask(TimeSpan.FromDays(1), notificationServices, userRepository, serviceRepository));
             backgroundRunner.StartTasks(cts.Token);
             var handler = new UpdateHandler(userSerivce, toDoService, toDoListService, scenarios, scenarioRepository);
             //botClient.DeleteWebhook(true);

@@ -108,5 +108,10 @@ namespace ConsoleApp1.Infrastructure.DataAccess
             }
             return result;
         }
+
+        public Task<IReadOnlyList<ToDoItem>> GetActiveWithDeadline(Guid userId, DateTime from, DateTime to, CancellationToken ct)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

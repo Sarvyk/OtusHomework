@@ -29,6 +29,11 @@ namespace ConsoleApp1.Infrastructure.DataAccess
             }
         }
 
+        public Task<IReadOnlyList<ToDoUser>> GetAllUsers(CancellationToken ct)
+        {
+            throw new NotImplementedException();
+        }
+
         public async Task<ToDoUser?> GetUserAsync(Guid userId, CancellationToken ct)
         {
             string[] users = Directory.GetFiles(_storagePath).Where(name => name == $"{userId.ToString()}.json").ToArray();

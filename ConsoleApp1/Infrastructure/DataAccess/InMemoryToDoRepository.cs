@@ -66,5 +66,9 @@ namespace ConsoleApp1.Infrastructure.DataAccess
                 throw new ArgumentException("Такой задачи нет, либо список пуст");
         }
 
+        public Task<IReadOnlyList<ToDoItem>> GetActiveWithDeadline(Guid userId, DateTime from, DateTime to, CancellationToken ct)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

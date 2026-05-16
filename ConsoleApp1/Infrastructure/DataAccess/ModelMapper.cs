@@ -1,6 +1,6 @@
 using ConsoleApp1.Core.Entities;
 using ConsoleApp1.Core.Entities.Enums;
-using ConsoleApp1.Infrastructure.Models;
+using ConsoleApp1.Infrastructure.DataAccess.Models;
 
 namespace ConsoleApp1.Infrastructure.DataAccess
 {
@@ -105,6 +105,41 @@ namespace ConsoleApp1.Infrastructure.DataAccess
                 ListName = entity.Name,
                 UserId = entity.UserDatabaseId ?? 0,
                 CreatedAt = entity.CreatedAt
+            };
+        }
+        public static Notification MapFromModel(NotificationModel model)
+        {
+            return new Notification
+            {
+                Id = model.ExternalId,
+                DatabaseId = model.Id,
+                User = new ToDoUser
+                {
+                    DatabaseId = model.User.Id,
+                    UserId = model.User.ExternalId,
+                    RegisteredAt = model.User.RegisteredAt,
+                    TelegramUserId = model.User.TelegramUserId,
+                    TelegramUserName = model.User.TelegramUserName
+                },
+                Type = model.Type,
+                Text = model.Text,
+                ScheduledAt = model.ScheduledAt,
+                IsNotified = model.IsNotified,
+                NotifiedAt = model.NotifiedAt
+            };
+        }
+
+        public static NotificationModel MapToModel(Notification entity)
+        {
+            return new NotificationModel
+            {
+                ExternalId = entity.Id,
+                UserId = entity.User?.DatabaseId ?? 0,
+                Type = entity.Type,
+                Text = entity.Text,
+                ScheduledAt = entity.ScheduledAt,
+                IsNotified = entity.IsNotified,
+                NotifiedAt = entity.NotifiedAt
             };
         }
     }

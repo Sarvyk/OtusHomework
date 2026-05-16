@@ -1,7 +1,7 @@
 using LinqToDB;
 using LinqToDB.Mapping;
 
-namespace ConsoleApp1.Infrastructure.Models
+namespace ConsoleApp1.Infrastructure.DataAccess.Models
 {
     [Table("ToDoItem")]
     internal class ToDoItemModel

@@ -28,13 +28,27 @@ CREATE TABLE "ToDoItem" (
     "ToDoListId" INTEGER NULL REFERENCES "ToDoList"(id)
 );
 
+--Таблица Notification
+CREATE TABLE "Notification" (
+    id SERIAL PRIMARY KEY,
+    "External_id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "User_id" INTEGER NOT NULL REFERENCES "ToDoUser"(id),
+    "Type" VARCHAR NOT NULL,
+    "Text" VARCHAR NOT NULL,
+    "Scheduled_at" TIMESTAMP NOT NULL,
+    "Is_notified" BOOLEAN NOT NULL DEFAULT FALSE,
+    "Notified_at" TIMESTAMP NULL
+);
+
 -- Индексы
 CREATE INDEX "idx_ToDoList_userid" ON "ToDoList"("UserId");
 CREATE INDEX "idx_ToDoItem_userid" ON "ToDoItem"("UserId");
 CREATE INDEX "idx_ToDoItem_ToDoList" ON "ToDoItem"("ToDoListId");
+CREATE INDEX idx_notification_scheduled_at ON "Notification"("Scheduled_at") WHERE "Is_notified" = FALSE;
+CREATE INDEX idx_notification_user_unnotified ON "Notification"("User_id", "Scheduled_at") WHERE "Is_notified" = FALSE;
 
 -- Уникальные индексы
-CREATE UNIQUE INDEX "idx_ToDoUser_telegramuserid" ON "ToDoUser"("Telegram_UserId");
-CREATE UNIQUE INDEX "idx_ToDoUser_external_id" ON "ToDoUser"("external_id");
-CREATE UNIQUE INDEX "idx_ToDoList_external_id" ON "ToDoList"("external_id");
-CREATE UNIQUE INDEX "idx_ToDoItem_external_id" ON "ToDoItem"("external_id");
+CREATE UNIQUE INDEX "uq_ToDoUser_telegramuserid" ON "ToDoUser"("Telegram_UserId");
+CREATE UNIQUE INDEX "uq_ToDoUser_external_id" ON "ToDoUser"("external_id");
+CREATE UNIQUE INDEX "uq_ToDoList_external_id" ON "ToDoList"("external_id");
+CREATE UNIQUE INDEX "uq_ToDoItem_external_id" ON "ToDoItem"("external_id");
