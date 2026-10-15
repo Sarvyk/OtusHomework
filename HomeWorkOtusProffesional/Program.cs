@@ -1,9 +1,12 @@
-﻿using System;
+﻿using Classes;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
+using System.Linq;
+using System.Management;
 using System.Text;
 using System.Threading.Tasks;
-using System.Linq;
-using System.Diagnostics;
 
 namespace HomeWorkOtusProffesional
 {
@@ -12,7 +15,7 @@ namespace HomeWorkOtusProffesional
         static async Task Main(string[] args)
         {
             Console.WriteLine("Hello, World!");
-            
+
             // Создание трёх файлов со случайным наполнением с пробелами
             Stopwatch stopwatch = Stopwatch.StartNew();
             CreateRandomFiles();
@@ -30,8 +33,117 @@ namespace HomeWorkOtusProffesional
             await ReadAllFilesFromFolder("./"); // Ждём завершения асинхронного метода
             stopwatch.Stop();
             Console.WriteLine($"Время чтения всех файлов из папки: {stopwatch.ElapsedMilliseconds} мс");
+
+            // Тестирование параллельного суммирования
+            Console.WriteLine("==============================================================");
+            Console.WriteLine("Тестирование параллельного суммирования:");
+            GetParallelCalc();
+            Console.ReadKey();
         }
-        
+
+        static void GetSystemInfo()
+        {
+            Console.WriteLine("========Характеристики========");
+            using (var searcher = new ManagementObjectSearcher("SELECT * FROM Win32_Processor"))
+            {
+                foreach (var obj in searcher.Get())
+                {
+                    Console.WriteLine($"CPU: {obj["Name"]}");
+                    Console.WriteLine($"Ядер: {obj["NumberOfCores"]}, Потоков: {obj["NumberOfLogicalProcessors"]}");
+                    Console.WriteLine($"Частота: {obj["MaxClockSpeed"]} MHz");
+                }
+            }
+            using (var searcher = new ManagementObjectSearcher("SELECT * FROM Win32_ComputerSystem"))
+            {
+                foreach (var obj in searcher.Get())
+                {
+                    ulong totalRam = Convert.ToUInt64(obj["TotalPhysicalMemory"]);
+                    Console.WriteLine($"Всего ОЗУ: {totalRam / 1024 / 1024 / 1024} GB");
+                }
+            }
+            using (var searcher = new ManagementObjectSearcher("SELECT * FROM Win32_OperatingSystem"))
+            {
+                foreach (var obj in searcher.Get())
+                {
+                    Console.WriteLine($"ОС: {obj["Caption"]}");
+                    Console.WriteLine($"Версия: {obj["Version"]}");
+                }
+            }
+            Console.WriteLine("==============================");
+        }
+        static void GetParallelCalc()
+        {
+            Stopwatch stopwatch = Stopwatch.StartNew();
+            // Создаем три списка с разными размерами
+            List<int> array100k = new List<int>(new int[100000]);
+            List<int> array1M = new List<int>(new int[1000000]);
+            List<int> array10M = new List<int>(new int[10000000]);
+
+            // Заполняем списки случайными значениями
+            Random random = new Random();
+            for (int i = 0; i < array100k.Count; i++)
+            {
+                array100k[i] = random.Next(1, 100);
+            }
+            for (int i = 0; i < array1M.Count; i++)
+            {
+                array1M[i] = random.Next(1, 100);
+            }
+            for (int i = 0; i < array10M.Count; i++)
+            {
+                array10M[i] = random.Next(1, 100);
+            }
+            ArraySumCalculator arraySumCalc = new ArraySumCalculator();
+            GetSystemInfo();
+
+            // Измеряем время синхронного суммирования
+            stopwatch.Restart();
+            int sumSync100k = arraySumCalc.CalculateSumSync(array100k);
+            stopwatch.Stop();
+            Console.WriteLine($"Синхронная сумма (100k элементов): {sumSync100k}, время: {stopwatch.ElapsedMilliseconds} мс");
+
+            stopwatch.Restart();
+            int sumSync1M = arraySumCalc.CalculateSumSync(array1M);
+            stopwatch.Stop();
+            Console.WriteLine($"Синхронная сумма (1M элементов): {sumSync1M}, время: {stopwatch.ElapsedMilliseconds} мс");
+
+            stopwatch.Restart();
+            int sumSync10M = arraySumCalc.CalculateSumSync(array10M);
+            stopwatch.Stop();
+            Console.WriteLine($"Синхронная сумма (10M элементов): {sumSync10M}, время: {stopwatch.ElapsedMilliseconds} мс");
+
+            // Измеряем время параллельного суммирования
+            stopwatch.Restart();
+            int sumParallel100k = arraySumCalc.CalculateSumParallel(array100k);
+            stopwatch.Stop();
+            Console.WriteLine($"Параллельная сумма (100k элементов): {sumParallel100k}, время: {stopwatch.ElapsedMilliseconds} мс");
+
+            stopwatch.Restart();
+            int sumParallel1M = arraySumCalc.CalculateSumParallel(array1M);
+            stopwatch.Stop();
+            Console.WriteLine($"Параллельная сумма (1M элементов): {sumParallel1M}, время: {stopwatch.ElapsedMilliseconds} мс");
+
+            stopwatch.Restart();
+            int sumParallel10M = arraySumCalc.CalculateSumParallel(array10M);
+            stopwatch.Stop();
+            Console.WriteLine($"Параллельная сумма (10M элементов): {sumParallel10M}, время: {stopwatch.ElapsedMilliseconds} мс");
+
+            // Измеряем время параллельного суммирования с помощью LINQ
+            stopwatch.Restart();
+            int sumParallelLinq100k = arraySumCalc.CalculateSumParallelLinq(array100k);
+            stopwatch.Stop();
+            Console.WriteLine($"Параллельная сумма с LINQ (100k элементов): {sumParallelLinq100k}, время: {stopwatch.ElapsedMilliseconds} мс");
+
+            stopwatch.Restart();
+            int sumParallelLinq1M = arraySumCalc.CalculateSumParallelLinq(array1M);
+            stopwatch.Stop();
+            Console.WriteLine($"Параллельная сумма с LINQ (1M элементов): {sumParallelLinq1M}, время: {stopwatch.ElapsedMilliseconds} мс");
+
+            stopwatch.Restart();
+            int sumParallelLinq10M = arraySumCalc.CalculateSumParallelLinq(array10M);
+            stopwatch.Stop();
+            Console.WriteLine($"Параллельная сумма с LINQ (10M элементов): {sumParallelLinq10M}, время: {stopwatch.ElapsedMilliseconds} мс");
+        }
         static void CreateRandomFiles()
         {
             try
@@ -50,20 +162,20 @@ namespace HomeWorkOtusProffesional
                 Console.WriteLine($"Ошибка при создании файлов: {ex.Message}");
             }
         }
-        
+
         static string GenerateSimpleContent()
         {
             Random random = new Random();
             StringBuilder sb = new StringBuilder();
-            
+
             // Генерируем строки
             int linesCount = random.Next(2, 4);
-            
+
             for (int i = 0; i < linesCount; i++)
             {
                 // Каждая строка - случайное количество символов
                 int lineLength = random.Next(5, 16);
-                
+
                 for (int j = 0; j < lineLength; j++)
                 {
                     // Случайно выбираем, добавлять пробел или символ
@@ -78,32 +190,32 @@ namespace HomeWorkOtusProffesional
                         sb.Append(randomChar);
                     }
                 }
-                
+
                 // Добавляем перевод строки
                 sb.AppendLine();
             }
-            
+
             return sb.ToString();
         }
-        
+
         static async Task ReadFilesParallel()
         {
             try
             {
                 // Оптимизированный вариант: используем LINQ для создания задач, как во втором методе
-                string[] files = {"file1.txt", "file2.txt", "file3.txt"};
+                string[] files = { "file1.txt", "file2.txt", "file3.txt" };
                 Task<int>[] tasks = files.Select(file => CountSpacesInFile(file)).ToArray();
-                
+
                 // Ожидаем завершения всех задач
                 int[] results = await Task.WhenAll(tasks);
-                
+
                 // Выводим результаты
                 Console.WriteLine($"\nКоличество пробелов в файлах:");
                 for (int i = 0; i < files.Length; i++)
                 {
                     Console.WriteLine($"{Path.GetFileName(files[i])}: {results[i]}");
                 }
-                
+
                 int totalSpaces = results.Sum();
                 Console.WriteLine($"\nОбщее количество пробелов: {totalSpaces}");
             }
@@ -112,17 +224,17 @@ namespace HomeWorkOtusProffesional
                 Console.WriteLine($"Ошибка при чтении файлов: {ex.Message}");
             }
         }
-        
+
         static async Task<int> CountSpacesInFile(string fileName)
         {
             try
             {
                 // Читаем содержимое файла асинхронно
                 string content = await File.ReadAllTextAsync(fileName);
-                
+
                 // Подсчитываем количество пробелов
                 int spaceCount = content.Count(c => c == ' ');
-                
+
                 return spaceCount;
             }
             catch (Exception ex)
@@ -131,7 +243,7 @@ namespace HomeWorkOtusProffesional
                 return 0;
             }
         }
-        
+
         // Новая функция для чтения всех файлов из папки параллельно
         static async Task ReadAllFilesFromFolder(string folderPath)
         {
@@ -139,28 +251,28 @@ namespace HomeWorkOtusProffesional
             {
                 // Получаем список файлов в папке
                 string[] files = Directory.GetFiles(folderPath, "*.txt");
-                
+
                 if (files.Length == 0)
                 {
                     Console.WriteLine($"\nВ папке {folderPath} нет текстовых файлов.");
                     return;
                 }
-                
+
                 Console.WriteLine($"\nНайдено {files.Length} текстовых файлов в папке {folderPath}:");
-                
+
                 // Создаем задачи для чтения всех файлов параллельно
                 Task<int>[] tasks = files.Select(file => CountSpacesInFile(file)).ToArray();
-                
+
                 // Ожидаем завершения всех задач
                 int[] results = await Task.WhenAll(tasks);
-                
+
                 // Выводим результаты
                 Console.WriteLine($"\nКоличество пробелов в файлах:");
                 for (int i = 0; i < files.Length; i++)
                 {
                     Console.WriteLine($"{Path.GetFileName(files[i])}: {results[i]}");
                 }
-                
+
                 int totalSpaces = results.Sum();
                 Console.WriteLine($"\nОбщее количество пробелов: {totalSpaces}");
             }
