@@ -7,7 +7,6 @@ namespace Classes
 {
     public class ArraySumCalculator
     {
-        private int sleep = 0;
         /// <summary>
         /// Синхронный метод для подсчёта суммы элементов списка целых чисел
         /// </summary>
@@ -22,7 +21,6 @@ namespace Classes
             foreach (int number in list)
             {
                 sum += number;
-                //Thread.Sleep(sleep);
             }
             
             return sum;
@@ -72,7 +70,6 @@ namespace Classes
                     for (int j = 0; j < size; j++)
                     {
                         sum += list[start + j];
-                        //Thread.Sleep(sleep);
                     }
                     results[index] = sum;
                 });
