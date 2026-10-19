@@ -1,4 +1,5 @@
 ﻿using Classes;
+using HomeWorkOtusProffesional.Additional;
 using HomeWorkOtusProffesional.Classes;
 using System.Diagnostics;
 using System.IO;
@@ -43,6 +44,8 @@ namespace HomeWorkOtusProffesional
             Console.WriteLine("==============================================================");
             Console.WriteLine("Тестирование параллельного суммирования:");
             GetParallelCalc();
+            Console.WriteLine("============================Тест классов======================");
+            EmployeeExample.RunExample();
             Console.ReadKey();
         }
 
@@ -74,7 +77,7 @@ namespace HomeWorkOtusProffesional
                     Console.WriteLine($"Версия: {obj["Version"]}");
                 }
             }
-            Console.WriteLine("==============================");
+            Console.WriteLine("==============================================================");
         }
         static void GetParallelCalc()
         {
