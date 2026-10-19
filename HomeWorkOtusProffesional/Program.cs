@@ -1,12 +1,10 @@
 ﻿using Classes;
-using System;
-using System.Collections.Generic;
+using HomeWorkOtusProffesional.Classes;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Management;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace HomeWorkOtusProffesional
 {
@@ -23,15 +21,22 @@ namespace HomeWorkOtusProffesional
             Console.WriteLine($"Время создания файлов: {stopwatch.ElapsedMilliseconds} мс");
             Console.WriteLine("==============================================================");
             // Чтение файлов параллельно и подсчет пробелов
+            TextFileParallelReader reader = new TextFileParallelReader();
             stopwatch.Restart();
-            await ReadFilesParallel(); // Ждём завершения асинхронного метода
+            var datas = await reader.ReadFilesParallel("file1.txt", "file2.txt","file3.txt"); // Ждём завершения асинхронного метода
+            var result1 = await CountSpacesInFile(datas);
             stopwatch.Stop();
+            Console.WriteLine($"Количество пробелов в файлах:");
+            WriteAll(result1);
             Console.WriteLine($"Время чтения файлов параллельно: {stopwatch.ElapsedMilliseconds} мс");
             Console.WriteLine("==============================================================");
             // Новая функциональность: чтение всех файлов из папки параллельно
             stopwatch.Restart();
-            await ReadAllFilesFromFolder("./"); // Ждём завершения асинхронного метода
+            var datas2 = await reader.ReadAllFilesFromFolder("./"); // Ждём завершения асинхронного метода
+            var result2 = await CountSpacesInFile(datas2);
             stopwatch.Stop();
+            Console.WriteLine($"Количество пробелов в файлах с аргументом пути к папке:");
+            WriteAll(result2);
             Console.WriteLine($"Время чтения всех файлов из папки: {stopwatch.ElapsedMilliseconds} мс");
 
             // Тестирование параллельного суммирования
@@ -198,87 +203,16 @@ namespace HomeWorkOtusProffesional
             return sb.ToString();
         }
 
-        static async Task ReadFilesParallel()
+        static Task<Dictionary<string, int>> CountSpacesInFile(Dictionary<string, string> contents)
         {
-            try
-            {
-                // Оптимизированный вариант: используем LINQ для создания задач, как во втором методе
-                string[] files = { "file1.txt", "file2.txt", "file3.txt" };
-                Task<int>[] tasks = files.Select(file => CountSpacesInFile(file)).ToArray();
-
-                // Ожидаем завершения всех задач
-                int[] results = await Task.WhenAll(tasks);
-
-                // Выводим результаты
-                Console.WriteLine($"\nКоличество пробелов в файлах:");
-                for (int i = 0; i < files.Length; i++)
-                {
-                    Console.WriteLine($"{Path.GetFileName(files[i])}: {results[i]}");
-                }
-
-                int totalSpaces = results.Sum();
-                Console.WriteLine($"\nОбщее количество пробелов: {totalSpaces}");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Ошибка при чтении файлов: {ex.Message}");
-            }
+            // Подсчитываем количество пробелов
+            return Task.Run(() => contents.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.Count(c => c == ' ')));
         }
-
-        static async Task<int> CountSpacesInFile(string fileName)
+        static void WriteAll(Dictionary<string, int> results)
         {
-            try
+            foreach(var file in results)
             {
-                // Читаем содержимое файла асинхронно
-                string content = await File.ReadAllTextAsync(fileName);
-
-                // Подсчитываем количество пробелов
-                int spaceCount = content.Count(c => c == ' ');
-
-                return spaceCount;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Ошибка при чтении файла {fileName}: {ex.Message}");
-                return 0;
-            }
-        }
-
-        // Новая функция для чтения всех файлов из папки параллельно
-        static async Task ReadAllFilesFromFolder(string folderPath)
-        {
-            try
-            {
-                // Получаем список файлов в папке
-                string[] files = Directory.GetFiles(folderPath, "*.txt");
-
-                if (files.Length == 0)
-                {
-                    Console.WriteLine($"\nВ папке {folderPath} нет текстовых файлов.");
-                    return;
-                }
-
-                Console.WriteLine($"\nНайдено {files.Length} текстовых файлов в папке {folderPath}:");
-
-                // Создаем задачи для чтения всех файлов параллельно
-                Task<int>[] tasks = files.Select(file => CountSpacesInFile(file)).ToArray();
-
-                // Ожидаем завершения всех задач
-                int[] results = await Task.WhenAll(tasks);
-
-                // Выводим результаты
-                Console.WriteLine($"\nКоличество пробелов в файлах:");
-                for (int i = 0; i < files.Length; i++)
-                {
-                    Console.WriteLine($"{Path.GetFileName(files[i])}: {results[i]}");
-                }
-
-                int totalSpaces = results.Sum();
-                Console.WriteLine($"\nОбщее количество пробелов: {totalSpaces}");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Ошибка при чтении файлов из папки {folderPath}: {ex.Message}");
+                Console.WriteLine($"Общее количество пробелов в файле {file.Key}: {file.Value}");
             }
         }
     }
