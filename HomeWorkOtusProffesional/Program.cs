@@ -2,22 +2,23 @@
 using HomeWorkOtusProffesional.Additional;
 using HomeWorkOtusProffesional.Classes;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
 using System.Management;
 using System.Text;
+using System.Text.Json;
 
 namespace HomeWorkOtusProffesional
 {
     internal class Program
     {
+        private static readonly CancellationTokenSource _cts = new CancellationTokenSource();
+        private static readonly FileSearcher _fileSearcher = new FileSearcher();
         static async Task Main(string[] args)
         {
             Console.WriteLine("Hello, World!");
 
             // Создание трёх файлов со случайным наполнением с пробелами
             Stopwatch stopwatch = Stopwatch.StartNew();
-            CreateRandomFiles();
+            CreateRandomFiles("./");
             stopwatch.Stop();
             Console.WriteLine($"Время создания файлов: {stopwatch.ElapsedMilliseconds} мс");
             Console.WriteLine("==============================================================");
@@ -46,9 +47,37 @@ namespace HomeWorkOtusProffesional
             GetParallelCalc();
             Console.WriteLine("============================Тест классов======================");
             EmployeeExample.RunExample();
+
+            // использование метода расширения GetMax
+            Console.WriteLine("============================Использование расширения====================");
+            var data = new List<TestModel>();
+            for (int i = 0; i < 15; i++)
+            {
+                Random rnd = new Random();
+                data.Add(new TestModel()
+                {
+                    Price = rnd.NextSingle() * rnd.Next(1, 10)
+                });
+            }
+            var maxNumber = CollectExt.GetMax<TestModel>(data, a => a.Price);
+            Console.WriteLine($"Максимальное число в списке: {maxNumber.Price}");
+            // Работа с событием
+            Console.WriteLine("============================Работа с событием====================");
+            CreateRandomFiles("./Files");
+            _fileSearcher.FileFound += OnFileFound;
+            await SearchFiles("./Files", _cts.Token);
+            _fileSearcher.FileFound -= OnFileFound;
             Console.ReadKey();
         }
 
+        static async Task SearchFiles(string path, CancellationToken ct)
+        {
+            _fileSearcher.SearchFiles("./Files", ct);
+        }
+        static void OnFileFound(object sender, FileArgs fileAgrs)
+        {
+            Console.WriteLine($"Файл найден: {fileAgrs.FileName}");
+        }
         static void GetSystemInfo()
         {
             Console.WriteLine("========Характеристики========");
@@ -152,14 +181,15 @@ namespace HomeWorkOtusProffesional
             stopwatch.Stop();
             Console.WriteLine($"Параллельная сумма с LINQ (10M элементов): {sumParallelLinq10M}, время: {stopwatch.ElapsedMilliseconds} мс");
         }
-        static void CreateRandomFiles()
+        static void CreateRandomFiles(string path)
         {
             try
             {
+                Directory.CreateDirectory(path);
                 // Создаем три файла с случайным содержимым
                 for (int i = 1; i <= 3; i++)
                 {
-                    string fileName = $"file{i}.txt";
+                    string fileName = $"{path}/file{i}.txt";
                     string content = GenerateSimpleContent();
                     File.WriteAllText(fileName, content);
                     Console.WriteLine($"Создан файл: {fileName}");
@@ -213,7 +243,7 @@ namespace HomeWorkOtusProffesional
         }
         static void WriteAll(Dictionary<string, int> results)
         {
-            foreach(var file in results)
+            foreach (var file in results)
             {
                 Console.WriteLine($"Общее количество пробелов в файле {file.Key}: {file.Value}");
             }
