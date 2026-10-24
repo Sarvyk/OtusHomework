@@ -47,8 +47,55 @@ namespace HomeWorkOtusProffesional
             GetParallelCalc();
             Console.WriteLine("============================Тест классов======================");
             EmployeeExample.RunExample();
+ 
+            // Создание и сериализация объекта класса F
+            Console.WriteLine("============================Сериализация F====================");
+            F fObject = new F(1,2,3,4,5);
+            ObjectToStringSerializer serializer = new ObjectToStringSerializer();
+            //StringBuilder serializedF = new StringBuilder();
+            string serializedF = string.Empty;
+            stopwatch.Restart();
+            int co = 100000;
+            for(int i = 0; i < co; i++)
+                serializedF = serializer.Serialize(fObject);
+            stopwatch.Stop();
+            var serializationTime = stopwatch.ElapsedMilliseconds;
+            stopwatch.Restart();
+            for (int i = 0; i < co; i++)
+                Console.Write(serializedF);
+            stopwatch.Stop();
+            var writeTime = stopwatch.ElapsedMilliseconds;
+            // Своя десериализация
+            F? deserializedF = null;
+            stopwatch.Restart();
+            for (int i = 0; i < co; i++)
+                deserializedF = (F?)serializer.Deserialize(serializedF, typeof(F));
+            stopwatch.Stop();
+            var deserializedTime = stopwatch.ElapsedMilliseconds;
 
-            // использование метода расширения GetMax
+            // Новая сериализация в JSON через встроенный .NET сериализатор
+            stopwatch.Restart();
+            string jsonSerializedF = string.Empty;
+            var options = new JsonSerializerOptions
+            {
+                IncludeFields = true
+            };
+            for (int i = 0; i < co; i++)
+                jsonSerializedF = JsonSerializer.Serialize(fObject, options);
+            stopwatch.Stop();
+            var serializedJSONTime = stopwatch.ElapsedMilliseconds;
+            F? jsonDeserializedF = null;
+            stopwatch.Restart();
+            for (int i = 0; i < co; i++)
+               jsonDeserializedF = JsonSerializer.Deserialize<F>(jsonSerializedF, options);
+            stopwatch.Stop();
+            var deserializedJSONTime = stopwatch.ElapsedMilliseconds;
+            Console.WriteLine($"\r\n\r\nСериализованный объект F: {serializedF}; Visual Studio, Сериализация {co} раз прошла за {serializationTime} мс");
+            Console.WriteLine($"Десериализация объекта F; Десериализация прошла за {deserializedTime} мс");
+            Console.WriteLine($"Вывод текста занял:{writeTime} мс");
+            Console.WriteLine($"Сериализованный объект F в JSON: {jsonSerializedF}; Сериализация прошла за {serializedJSONTime} мс");
+            Console.WriteLine($"Десериализация объекта из JSON в F: {jsonSerializedF}; Сериализация прошла за {deserializedJSONTime} мс");
+          // использование метода расширения GetMax
             Console.WriteLine("============================Использование расширения====================");
             var data = new List<TestModel>();
             for (int i = 0; i < 15; i++)
